@@ -1,0 +1,56 @@
+syntax="proto3";
+
+package user;
+
+option go_package="/user";
+
+service UserService {
+  rpc Register(RegisterReq) returns (RegisterResp) {}
+  rpc Login(LoginReq) returns (LoginResp) {}
+  rpc Delete(DeleteReq) returns (DeleteResp){}
+  rpc Update(UpdateReq) returns (UpdateResp){}
+  rpc Info(InfoReq) returns (InfoResp){}
+}
+
+message RegisterReq {
+  string email = 1;
+  string password = 2;
+}
+
+message RegisterResp {
+  uint32 user_id = 1;
+}
+
+message LoginReq {
+  string email= 1;
+  string password = 2;
+}
+
+message LoginResp {
+  uint32 user_id = 1;
+}
+
+message DeleteReq {
+  uint32 user_id=1;
+}
+
+message DeleteResp{
+  uint32 user_id=1;
+}
+
+message UpdateReq{
+  uint32 user_id=1;
+}
+
+message UpdateResp{
+  uint32 user_id=1;
+}
+
+message InfoReq{
+  uint32 user_id=1;
+}
+
+message InfoResp{
+  string email=1;
+}
+
