@@ -1,0 +1,6 @@
+Name: cart.rpc
+ListenOn: 0.0.0.0:8892
+Etcd:
+  Hosts:
+  - 127.0.0.1:4379
+  Key: cart.rpc

@@ -12,6 +12,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	err = db.SetupJoinTable(&model.Cart{}, "Products", &model.CartProducts{})
+	if err != nil {
+		panic(err)
+	}
 	err = db.AutoMigrate(&model.User{}, &model.Categories{}, &model.Product{}, &model.Cart{}, &model.Order{}, &model.Address{})
 	if err != nil {
 		panic(err)

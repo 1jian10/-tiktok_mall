@@ -46,6 +46,10 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 		return &user.RegisterResp{UserId: 0}, nil
 	}
 	db.Where("email = ?", in.Email).First(&u)
+	if err := db.Create(&model.Cart{UserID: u.ID}).Error; err != nil {
+		mlog.Error(err.Error())
+		return &user.RegisterResp{UserId: 0}, nil
+	}
 	mlog.Info("register userid:" + strconv.Itoa(int(u.ID)))
 
 	return &user.RegisterResp{UserId: uint32(u.ID)}, nil
