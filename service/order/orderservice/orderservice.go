@@ -7,7 +7,7 @@ package orderservice
 import (
 	"context"
 
-	"mall/service/order/.proto/order"
+	"mall/service/order/proto/order"
 
 	"github.com/zeromicro/go-zero/zrpc"
 	"google.golang.org/grpc"

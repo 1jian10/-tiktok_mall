@@ -9,8 +9,8 @@ type User struct {
 	Email    string `gorm:"unique"`
 	Password string
 
-	Cart    *Cart
-	Address *Address
+	Cart   *Cart
+	Orders []Order
 }
 
 type Address struct {
@@ -20,6 +20,4 @@ type Address struct {
 	State         string
 	Country       string
 	ZipCode       int32
-
-	UserID uint `gorm:"foreignKey:UserID"`
 }

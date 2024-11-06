@@ -4,10 +4,10 @@ import (
 	"flag"
 	"fmt"
 
-	"mall/service/order/.proto/order"
 	"mall/service/order/internal/config"
 	"mall/service/order/internal/server"
 	"mall/service/order/internal/svc"
+	"mall/service/order/proto/order"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"

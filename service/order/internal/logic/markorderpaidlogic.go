@@ -3,8 +3,8 @@ package logic
 import (
 	"context"
 
-	"mall/service/order/.proto/order"
 	"mall/service/order/internal/svc"
+	"mall/service/order/proto/order"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )

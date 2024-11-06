@@ -7,9 +7,9 @@ package server
 import (
 	"context"
 
-	"mall/service/order/.proto/order"
 	"mall/service/order/internal/logic"
 	"mall/service/order/internal/svc"
+	"mall/service/order/proto/order"
 )
 
 type OrderServiceServer struct {
