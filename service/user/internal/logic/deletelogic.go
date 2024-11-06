@@ -4,9 +4,9 @@ import (
 	"context"
 	mlog "mall/log"
 	"mall/model"
-
 	"mall/service/user/internal/svc"
 	"mall/service/user/proto/user"
+	"strconv"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -31,7 +31,8 @@ func (l *DeleteLogic) Delete(in *user.DeleteReq) (*user.DeleteResp, error) {
 	err := db.Model(&model.User{}).Delete(&model.User{}, in.UserId).Error
 	if err != nil {
 		mlog.Error(err.Error())
-		return &user.DeleteResp{UserId: 0}, err
+		return &user.DeleteResp{UserId: 0}, nil
 	}
+	mlog.Info("delete user:" + strconv.Itoa(int(in.UserId)))
 	return &user.DeleteResp{UserId: in.UserId}, nil
 }

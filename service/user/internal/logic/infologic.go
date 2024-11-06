@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"fmt"
 	mlog "mall/log"
 	"mall/model"
 
@@ -33,6 +34,6 @@ func (l *InfoLogic) Info(in *user.InfoReq) (*user.InfoResp, error) {
 		mlog.Error(err.Error())
 		return &user.InfoResp{Email: ""}, nil
 	}
+	mlog.Debug("show userinfo:" + fmt.Sprintln(u))
 	return &user.InfoResp{Email: u.Email}, nil
-
 }

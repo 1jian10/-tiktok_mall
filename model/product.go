@@ -10,6 +10,7 @@ type Product struct {
 	Description string  `json:"description"`
 	Picture     string  `json:"picture"`
 	Price       float32 `json:"price"`
+	Stock       uint
 
 	Carts      []Cart       `gorm:"many2many:cart_products" json:"-"`
 	Orders     []Order      `gorm:"many2many:order_products" json:"-"`

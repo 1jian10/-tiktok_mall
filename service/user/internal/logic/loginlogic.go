@@ -33,8 +33,13 @@ func (l *LoginLogic) Login(in *user.LoginReq) (*user.LoginResp, error) {
 
 	res := db.Model(&model.User{}).Where("email = ?", in.Email).Where("password = ?", in.Password).First(&u)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		mlog.Debug("login:record not found")
+		mlog.Info("login:record not found")
+		return &user.LoginResp{UserId: 0}, nil
+	} else if res.Error != nil {
+		mlog.Error(res.Error.Error())
 		return &user.LoginResp{UserId: 0}, nil
 	}
+	mlog.Info("login email:" + in.Email + " " + "password:" + in.Password)
+
 	return &user.LoginResp{UserId: uint32(u.ID)}, nil
 }

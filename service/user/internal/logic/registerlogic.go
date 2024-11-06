@@ -4,6 +4,7 @@ import (
 	"context"
 	mlog "mall/log"
 	"mall/model"
+	"strconv"
 
 	"mall/service/user/internal/svc"
 	"mall/service/user/proto/user"
@@ -45,6 +46,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 		return &user.RegisterResp{UserId: 0}, nil
 	}
 	db.Where("email = ?", in.Email).First(&u)
+	mlog.Info("register userid:" + strconv.Itoa(int(u.ID)))
 
 	return &user.RegisterResp{UserId: uint32(u.ID)}, nil
 }
