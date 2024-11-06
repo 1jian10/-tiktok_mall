@@ -1,23 +1,12 @@
 package main
 
-import (
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
-	"log/slog"
-	"mall/model"
-)
+import "github.com/gin-gonic/gin"
 
 func main() {
-	dsn := "root:2549124159f@tcp(127.0.0.1:3306)/tiktok_mall?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true})
+	engine := gin.Default()
 
+	err := engine.Run("0.0.0.0:23333")
 	if err != nil {
-		slog.Error(err.Error())
-		return
+		panic(err)
 	}
-	err = db.AutoMigrate(&model.Product{}, &model.User{}, &model.Categories{}, &model.Address{}, &model.Order{}, &model.Cart{})
-	if err != nil {
-		slog.Error(err.Error())
-	}
-	return
 }

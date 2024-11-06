@@ -2,12 +2,27 @@ syntax = "proto3";
 
 package order;
 
-option go_package = "order";
+option go_package = "/order";
 
 service OrderService {
-  rpc PlaceOrder(PlaceOrderReq) returns (PlaceOrderResp) {}
+  rpc PlaceOrder(PlaceOrderReq) returns(PlaceOrderResp){}
+  rpc ProcessOrder(ProcessOrderReq) returns (ProcessOrderResp) {}
   rpc ListOrder(ListOrderReq) returns (ListOrderResp) {}
   rpc MarkOrderPaid(MarkOrderPaidReq) returns (MarkOrderPaidResp) {}
+}
+
+message PlaceOrderReq{
+  repeated CartItem items=1;
+  uint32 user_id =2;
+}
+
+message PlaceOrderResp{
+  string success=1;
+}
+
+message CartItem {
+  uint32 product_id = 1;
+  int32  quantity = 2;
 }
 
 message Address {
@@ -18,7 +33,7 @@ message Address {
   int32 zip_code = 5;
 }
 
-message PlaceOrderReq {
+message ProcessOrderReq {
   uint32 user_id = 1;
   string user_currency = 2;
 
@@ -28,17 +43,11 @@ message PlaceOrderReq {
 }
 
 message OrderItem {
-  cart.CartItem item = 1;
+  CartItem item = 1;
   float cost = 2;
 }
 
-message OrderResult {
-  string order_id = 1;
-}
-
-message PlaceOrderResp {
-  OrderResult order = 1;
-}
+message ProcessOrderResp {}
 
 message ListOrderReq {
   uint32 user_id = 1;
@@ -51,7 +60,6 @@ message Order {
   string user_currency = 4;
   Address address = 5;
   string email = 6;
-  int32 created_at = 7;
 }
 
 message ListOrderResp {
