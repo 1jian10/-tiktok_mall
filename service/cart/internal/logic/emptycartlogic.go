@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 
 	"mall/service/cart/internal/svc"
 	"mall/service/cart/proto/cart"
@@ -27,7 +27,7 @@ func NewEmptyCartLogic(ctx context.Context, svcCtx *svc.ServiceContext) *EmptyCa
 
 func (l *EmptyCartLogic) EmptyCart(in *cart.EmptyCartReq) (*cart.EmptyCartResp, error) {
 	db := l.svcCtx.DB
-	c := model.Cart{UserID: uint(in.UserId)}
+	c := database.Cart{UserID: uint(in.UserId)}
 	if err := db.Where("user_id = ?", c.UserID).Take(&c).Error; err != nil {
 		mlog.Error(err.Error())
 		return &cart.EmptyCartResp{}, nil
@@ -36,7 +36,7 @@ func (l *EmptyCartLogic) EmptyCart(in *cart.EmptyCartReq) (*cart.EmptyCartResp, 
 	for i, v := range c.Products {
 		ProductID[i] = v.ID
 	}
-	err := db.Where("cart_id = ?", c.ID).Where("product_id in ?", ProductID).Delete(&model.CartProducts{}).Error
+	err := db.Where("cart_id = ?", c.ID).Where("product_id in ?", ProductID).Delete(&database.CartProducts{}).Error
 	if err != nil {
 		mlog.Error(err.Error())
 	}

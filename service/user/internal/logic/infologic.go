@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 
 	"mall/service/user/internal/svc"
 	"mall/service/user/proto/user"
@@ -28,8 +28,8 @@ func NewInfoLogic(ctx context.Context, svcCtx *svc.ServiceContext) *InfoLogic {
 
 func (l *InfoLogic) Info(in *user.InfoReq) (*user.InfoResp, error) {
 	db := l.svcCtx.DB
-	u := model.User{}
-	err := db.Model(&model.User{}).Where("id = ?", in.UserId).First(&u).Error
+	u := database.User{}
+	err := db.Model(&database.User{}).Where("id = ?", in.UserId).First(&u).Error
 	if err != nil {
 		mlog.Error(err.Error())
 		return &user.InfoResp{Email: ""}, nil

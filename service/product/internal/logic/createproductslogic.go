@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"strconv"
 
 	"mall/service/product/internal/svc"
@@ -30,7 +30,7 @@ func (l *CreateProductsLogic) CreateProducts(in *product.CreateProductsReq) (*pr
 	db := l.svcCtx.DB
 	res := make([]uint32, len(in.Products))
 	for i, v := range in.Products {
-		p := model.Product{
+		p := database.Product{
 			Name:        v.Name,
 			Description: v.Description,
 			Picture:     v.Picture,
@@ -38,9 +38,9 @@ func (l *CreateProductsLogic) CreateProducts(in *product.CreateProductsReq) (*pr
 			Stock:       uint(v.Stock),
 		}
 		for _, c := range v.Categories {
-			p.Categories = append(p.Categories, model.Categories{Name: c})
+			p.Categories = append(p.Categories, database.Categories{Name: c})
 		}
-		if err := db.Model(&model.Product{}).Create(&p).Error; err != nil {
+		if err := db.Model(&database.Product{}).Create(&p).Error; err != nil {
 			mlog.Error(err.Error())
 			continue
 		}

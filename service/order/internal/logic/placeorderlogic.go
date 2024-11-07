@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/redis/go-redis/v9"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"strconv"
 	"time"
 
@@ -63,7 +63,7 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 			decr = append(decr, uint(item.Quantity))
 			continue
 		}
-		p := model.Product{}
+		p := database.Product{}
 		err = db.Select("Stock").Take(&p, item.ProductId).Error
 		if err != nil {
 			mlog.Error(err.Error())

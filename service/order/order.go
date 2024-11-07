@@ -7,7 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"mall/service/order/internal/config"
 	"mall/service/order/internal/server"
 	"mall/service/order/internal/svc"
@@ -69,7 +69,7 @@ func OrderHandle(rdb *redis.Client, db *gorm.DB) {
 			}
 			rdb.ZRem(context.Background(), "order:time", v)
 			mlog.Info("delete" + fmt.Sprint(v))
-			err = db.Where("paid = ?", "False").Delete(&model.Order{}, v).Error
+			err = db.Where("paid = ?", "False").Delete(&database.Order{}, v).Error
 			if err != nil {
 				mlog.Error(err.Error())
 			}

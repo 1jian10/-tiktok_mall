@@ -5,7 +5,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"mall/service/order/internal/svc"
 	"mall/service/order/proto/order"
 	"time"
@@ -34,12 +34,12 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	for _, val := range in.OrderItems {
 		cost += val.Cost
 	}
-	o := model.Order{
+	o := database.Order{
 		Currency: in.UserCurrency,
 		Paid:     "False",
 		Cost:     cost,
 		UserID:   uint(in.UserId),
-		Address: &model.Address{
+		Address: &database.Address{
 			StreetAddress: in.Address.StreetAddress,
 			City:          in.Address.City,
 			State:         in.Address.State,
@@ -55,7 +55,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		return &order.ProcessOrderResp{}, nil
 	}
 	for _, val := range in.OrderItems {
-		err = tx.Create(&model.OrderProducts{
+		err = tx.Create(&database.OrderProducts{
 			OrderID:   o.ID,
 			ProductID: uint(val.Item.ProductId),
 			Quantity:  uint(val.Item.Quantity),
@@ -64,7 +64,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 			tx.Rollback()
 			mlog.Error(err.Error())
 		}
-		res := tx.Model(&model.Product{}).Where("id = ?", val.Item.ProductId).UpdateColumn("Stock", gorm.Expr("Stock - ?", val.Item.Quantity))
+		res := tx.Model(&database.Product{}).Where("id = ?", val.Item.ProductId).UpdateColumn("Stock", gorm.Expr("Stock - ?", val.Item.Quantity))
 		if res.Error != nil {
 			tx.Rollback()
 			mlog.Error(res.Error.Error())

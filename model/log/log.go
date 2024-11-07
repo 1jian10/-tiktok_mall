@@ -1,4 +1,4 @@
-package model
+package log
 
 type LogBody struct {
 	Name    string `json:"name"`

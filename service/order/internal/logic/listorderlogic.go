@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"strconv"
 
 	"mall/service/order/internal/svc"
@@ -28,7 +28,7 @@ func NewListOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListOrd
 
 func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp, error) {
 	db := l.svcCtx.DB
-	u := &model.User{}
+	u := &database.User{}
 	err := db.Preload("Orders.Products").Preload("Orders.Address").Take(&u, in.UserId).Error
 	//mlog.Debug(fmt.Sprintln(u))
 	if err != nil {
@@ -54,7 +54,7 @@ func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp
 			Email: u.Email,
 		}
 		for j, p := range o.Products {
-			op := model.OrderProducts{}
+			op := database.OrderProducts{}
 			err := db.Where("order_id = ?", o.ID).Where("product_id = ?", p.ID).Take(&op).Error
 			if err != nil {
 				mlog.Error(err.Error())

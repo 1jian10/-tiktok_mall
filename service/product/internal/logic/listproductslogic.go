@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 
 	"mall/service/product/internal/svc"
 	"mall/service/product/proto/product"
@@ -27,7 +27,7 @@ func NewListProductsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 
 func (l *ListProductsLogic) ListProducts(in *product.ListProductsReq) (*product.ListProductsResp, error) {
 	db := l.svcCtx.DB
-	p := make([]model.Product, 0)
+	p := make([]database.Product, 0)
 	err := db.Preload("Categories").Offset(int(in.Page-1) * int(in.PageSize)).Limit(int(in.PageSize)).Find(&p).Error
 	if err != nil {
 		mlog.Error(err.Error())

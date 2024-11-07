@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/nsqio/go-nsq"
 	"log/slog"
-	"mall/model"
+	"mall/model/log"
 )
 
 var producer *nsq.Producer
@@ -25,20 +25,20 @@ func init() {
 }
 
 func Debug(msg string) {
-	send(msg, model.Debug)
+	send(msg, log.Debug)
 }
 func Info(msg string) {
-	send(msg, model.Info)
+	send(msg, log.Info)
 }
 func Warn(msg string) {
-	send(msg, model.Warn)
+	send(msg, log.Warn)
 }
 func Error(msg string) {
-	send(msg, model.Error)
+	send(msg, log.Error)
 }
 
 func send(msg string, level int) {
-	m, _ := json.Marshal(model.LogBody{
+	m, _ := json.Marshal(log.LogBody{
 		Name:    name,
 		Level:   level,
 		Message: msg,

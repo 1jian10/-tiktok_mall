@@ -5,7 +5,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 
 	"mall/service/product/internal/svc"
 	"mall/service/product/proto/product"
@@ -29,7 +29,7 @@ func NewSearchProductsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Se
 
 func (l *SearchProductsLogic) SearchProducts(in *product.SearchProductsReq) (*product.SearchProductsResp, error) {
 	db := l.svcCtx.DB
-	p := make([]model.Product, 0)
+	p := make([]database.Product, 0)
 	err := db.Where("name LIKE %?%", in.Query).Find(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		mlog.Info("not found name like:" + in.Query)

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"time"
 
 	"mall/service/order/internal/svc"
@@ -41,7 +41,7 @@ func (l *MarkOrderPaidLogic) MarkOrderPaid(in *order.MarkOrderPaidReq) (*order.M
 		}
 		break
 	}
-	err := db.Model(&model.Order{}).Where("id = ?", in.OrderId).Update("Paid", "True").Error
+	err := db.Model(&database.Order{}).Where("id = ?", in.OrderId).Update("Paid", "True").Error
 	if err != nil {
 		mlog.Error(err.Error())
 	}

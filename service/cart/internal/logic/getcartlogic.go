@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 
 	"mall/service/cart/internal/svc"
 	"mall/service/cart/proto/cart"
@@ -27,14 +27,14 @@ func NewGetCartLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetCartLo
 
 func (l *GetCartLogic) GetCart(in *cart.GetCartReq) (*cart.GetCartResp, error) {
 	db := l.svcCtx.DB
-	u := model.User{}
+	u := database.User{}
 	err := db.Preload("Cart").First(&u, in.UserId).Error
 	if err != nil {
 		mlog.Error(err.Error())
 		return &cart.GetCartResp{Items: make([]*cart.CartItem, 0)}, nil
 	}
-	c := make([]model.CartProducts, 0)
-	err = db.Model(&model.CartProducts{}).Where("cart_id = ?", u.Cart.ID).Find(&c).Error
+	c := make([]database.CartProducts, 0)
+	err = db.Model(&database.CartProducts{}).Where("cart_id = ?", u.Cart.ID).Find(&c).Error
 	if err != nil {
 		mlog.Error(err.Error())
 		return &cart.GetCartResp{Items: make([]*cart.CartItem, 0)}, nil

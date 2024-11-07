@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/nsqio/go-nsq"
 	"log/slog"
-	"mall/model"
+	"mall/model/log"
 	"time"
 )
 
@@ -16,7 +16,7 @@ type MessageHandler struct {
 }
 
 func (h *MessageHandler) HandleMessage(message *nsq.Message) error {
-	var msg model.LogBody
+	var msg log.LogBody
 
 	err := json.Unmarshal(message.Body, &msg)
 	if err != nil {
@@ -28,7 +28,7 @@ func (h *MessageHandler) HandleMessage(message *nsq.Message) error {
 	return nil
 
 }
-func output(msg model.LogBody) {
+func output(msg log.LogBody) {
 	if msg.Level >= level {
 		fmt.Println(msg.Name, time.Now().Format("2006-01-02 15:04:05"), mp[msg.Level]+":", msg.Message)
 	}
@@ -42,12 +42,12 @@ func main() {
 	if err = consumer.ConnectToNSQD("127.0.0.1:4150"); err != nil {
 		panic(err.Error())
 	}
-	level = model.Debug
+	level = log.Debug
 	mp = map[int]string{
-		model.Debug: "DEBUG",
-		model.Info:  "INFO",
-		model.Warn:  "WARN",
-		model.Error: "ERROR",
+		log.Debug: "DEBUG",
+		log.Info:  "INFO",
+		log.Warn:  "WARN",
+		log.Error: "ERROR",
 	}
 	slog.Info("log start.....")
 	select {}

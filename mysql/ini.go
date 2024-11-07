@@ -1,7 +1,7 @@
 package main
 
 import (
-	"mall/model"
+	"mall/model/database"
 )
 import "gorm.io/gorm"
 import "gorm.io/driver/mysql"
@@ -12,15 +12,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = db.SetupJoinTable(&model.Cart{}, "Products", &model.CartProducts{})
+	err = db.SetupJoinTable(&database.Cart{}, "Products", &database.CartProducts{})
 	if err != nil {
 		panic(err)
 	}
-	err = db.SetupJoinTable(&model.Order{}, "Products", &model.OrderProducts{})
+	err = db.SetupJoinTable(&database.Order{}, "Products", &database.OrderProducts{})
 	if err != nil {
 		panic(err)
 	}
-	err = db.AutoMigrate(&model.User{}, &model.Categories{}, &model.Product{}, &model.Cart{}, &model.Order{}, &model.Address{})
+	err = db.AutoMigrate(&database.User{}, &database.Categories{}, &database.Product{}, &database.Cart{}, &database.Order{}, &database.Address{})
 	if err != nil {
 		panic(err)
 	}

@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"strconv"
 
 	"mall/service/user/internal/svc"
@@ -30,14 +30,14 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 
 func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, error) {
 	db := l.svcCtx.DB
-	u := model.User{}
+	u := database.User{}
 
 	res := db.Where("email = ?", in.Email).First(&u)
 	if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		mlog.Debug("register:find repeat record")
 		return &user.RegisterResp{UserId: 0}, nil
 	}
-	res = db.Create(&model.User{
+	res = db.Create(&database.User{
 		Email:    in.Email,
 		Password: in.Password,
 	})
@@ -46,7 +46,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 		return &user.RegisterResp{UserId: 0}, nil
 	}
 	db.Where("email = ?", in.Email).First(&u)
-	if err := db.Create(&model.Cart{UserID: u.ID}).Error; err != nil {
+	if err := db.Create(&database.Cart{UserID: u.ID}).Error; err != nil {
 		mlog.Error(err.Error())
 		return &user.RegisterResp{UserId: 0}, nil
 	}

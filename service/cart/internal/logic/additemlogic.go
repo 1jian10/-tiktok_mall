@@ -5,7 +5,7 @@ import (
 	"errors"
 	"gorm.io/gorm"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"strconv"
 
 	"mall/service/cart/internal/svc"
@@ -30,8 +30,8 @@ func NewAddItemLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AddItemLo
 
 func (l *AddItemLogic) AddItem(in *cart.AddItemReq) (*cart.AddItemResp, error) {
 	db := l.svcCtx.DB
-	p := model.Product{}
-	u := model.User{}
+	p := database.Product{}
+	u := database.User{}
 
 	err := db.Preload("Cart").Where("id = ?", in.UserId).Take(&u).Error
 	if err != nil {
@@ -47,7 +47,7 @@ func (l *AddItemLogic) AddItem(in *cart.AddItemReq) (*cart.AddItemResp, error) {
 		return &cart.AddItemResp{}, nil
 	}
 
-	c := model.CartProducts{CartID: u.Cart.ID, ProductID: uint(in.Item.ProductId), Quantity: uint(in.Item.Quantity)}
+	c := database.CartProducts{CartID: u.Cart.ID, ProductID: uint(in.Item.ProductId), Quantity: uint(in.Item.Quantity)}
 	err = db.Save(&c).Error
 	if err != nil {
 		mlog.Error(err.Error())

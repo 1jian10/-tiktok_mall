@@ -7,7 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"log/slog"
 	mlog "mall/log"
-	"mall/model"
+	"mall/model/database"
 	"strconv"
 	"time"
 
@@ -44,7 +44,7 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 			return &product.GetProductResp{Product: &res}, nil
 		}
 	}
-	p := model.Product{}
+	p := database.Product{}
 	err = db.Preload("Categories").Where("id = ?", in.Id).Take(&p).Error
 	if err != nil {
 		slog.Error(err.Error())
