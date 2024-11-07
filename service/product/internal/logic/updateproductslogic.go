@@ -19,6 +19,7 @@ func NewUpdateProductsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Up
 	return &UpdateProductsLogic{
 		ctx:    ctx,
 		svcCtx: svcCtx,
+
 		Logger: logx.WithContext(ctx),
 	}
 }

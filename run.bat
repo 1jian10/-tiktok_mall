@@ -1,0 +1,5 @@
+start "" go run "C:\Code\Go\mall\mysql\ini.go"
+start "" go run "C:\Code\Go\mall\service\user\user.go"
+start "" go run "C:\Code\Go\mall\service\product\product.go"
+start "" go run "C:\Code\Go\mall\service\cart\cart.go"
+start "" go run "C:\Code\Go\mall\service\order\order.go"

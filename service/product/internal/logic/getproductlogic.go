@@ -57,7 +57,6 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 			Description: p.Description,
 			Picture:     p.Picture,
 			Price:       p.Price,
-			Stock:       uint32(p.Stock),
 			Categories:  make([]string, len(p.Categories)),
 		},
 	}

@@ -1,13 +1,12 @@
 package svc
 
 import (
-	"mall/service/order/internal/config"
-
 	"context"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	mlog "mall/log"
+	"mall/service/order/internal/config"
 )
 
 type ServiceContext struct {

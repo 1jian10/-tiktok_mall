@@ -2,11 +2,13 @@ package logic
 
 import (
 	"context"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	mlog "mall/log"
 	"mall/model"
 	"mall/service/order/internal/svc"
 	"mall/service/order/proto/order"
+	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -27,6 +29,7 @@ func NewProcessOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Proc
 
 func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.ProcessOrderResp, error) {
 	db := l.svcCtx.DB
+	rdb := l.svcCtx.RDB
 	var cost float32
 	for _, val := range in.OrderItems {
 		cost += val.Cost
@@ -69,5 +72,13 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		}
 	}
 	tx.Commit()
+	err = rdb.ZAdd(context.Background(), "order:time", redis.Z{
+		Score:  float64(time.Now().Add(time.Minute * 15).Unix()),
+		Member: o.ID,
+	}).Err()
+	if err != nil {
+		mlog.Error(err.Error())
+	}
+
 	return &order.ProcessOrderResp{}, nil
 }
