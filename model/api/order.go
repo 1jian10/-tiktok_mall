@@ -12,6 +12,14 @@ type CheckOutResp struct {
 	Success bool `json:"success"`
 }
 
+type ChargeReq struct {
+	OrderId uint `json:"order_id"`
+}
+
+type ChargeResp struct {
+	Success bool `json:"success"`
+}
+
 type Address struct {
 	StreetAddress string `json:"street_address"`
 	City          string `json:"city"`

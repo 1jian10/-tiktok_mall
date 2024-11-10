@@ -1,6 +1,7 @@
-package api
+package order
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/zeromicro/go-zero/core/discov"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -9,6 +10,7 @@ import (
 	"mall/service/cart/proto/cart"
 	"mall/service/order/proto/order"
 	"net/http"
+	"strconv"
 )
 
 var OrderClient order.OrderServiceClient
@@ -31,11 +33,20 @@ func InitOrder(engine *gin.Engine) {
 	CartClient = cart.NewCartServiceClient(CartConn.Conn())
 	mlog.SetName("OrderAPI")
 
-	group := engine.Group("/order")
+	group := engine.Group("/Order")
 	{
 		group.POST("/CheckOut", CheckOut)
+		group.POST("/Charge", Charge)
+		group.POST("/List", List)
 	}
 
+}
+
+func List(c *gin.Context) {
+	id := uint32(1)
+	//v:=c.Value("userid")
+	resp, _ := OrderClient.ListOrder(c, &order.ListOrderReq{UserId: id})
+	c.JSON(http.StatusOK, resp.Orders)
 }
 
 func CheckOut(c *gin.Context) {
@@ -58,11 +69,30 @@ func CheckOut(c *gin.Context) {
 			req.ProductID = append(req.ProductID, uint(v.ProductId))
 		}
 	}
-	orderMake(c, req, id, email)
-
+	Make(c, req, id, email)
 }
 
-func orderMake(c *gin.Context, req api.CheckOutReq, id uint32, email string) {
+func Charge(c *gin.Context) {
+	//v := c.Value("userid")
+	id := uint32(1)
+	req := api.ChargeReq{}
+	if err := c.ShouldBind(&req); err != nil {
+		mlog.Error(err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{})
+	}
+
+	_, err := OrderClient.MarkOrderPaid(context.Background(), &order.MarkOrderPaidReq{
+		UserId:  id,
+		OrderId: strconv.Itoa(int(req.OrderId)), //maybe bug
+	})
+	if err != nil {
+		c.JSON(http.StatusOK, api.ChargeResp{Success: false})
+	} else {
+		c.JSON(http.StatusOK, api.ChargeResp{Success: true})
+	}
+}
+
+func Make(c *gin.Context, req api.CheckOutReq, id uint32, email string) {
 	PlaceReq := order.PlaceOrderReq{
 		Items:  make([]*order.CartItem, len(req.ProductID)),
 		UserId: id,
@@ -106,5 +136,4 @@ func orderMake(c *gin.Context, req api.CheckOutReq, id uint32, email string) {
 			Success: false,
 		})
 	}
-
 }

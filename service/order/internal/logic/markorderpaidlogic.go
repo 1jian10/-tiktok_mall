@@ -44,6 +44,8 @@ func (l *MarkOrderPaidLogic) MarkOrderPaid(in *order.MarkOrderPaidReq) (*order.M
 	err := db.Model(&database.Order{}).Where("id = ?", in.OrderId).Update("Paid", "True").Error
 	if err != nil {
 		mlog.Error(err.Error())
+		rdb.Del(context.Background(), "order:lock"+fmt.Sprintln(in.OrderId))
+		return &order.MarkOrderPaidResp{}, err
 	}
 
 	err = rdb.Del(context.Background(), "order:lock"+fmt.Sprintln(in.OrderId)).Err()

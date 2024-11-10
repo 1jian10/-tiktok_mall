@@ -36,22 +36,22 @@ func (l *AddItemLogic) AddItem(in *cart.AddItemReq) (*cart.AddItemResp, error) {
 	err := db.Preload("Cart").Where("id = ?", in.UserId).Take(&u).Error
 	if err != nil {
 		mlog.Error(err.Error())
-		return &cart.AddItemResp{}, nil
+		return &cart.AddItemResp{}, err
 	}
 	err = db.Where("id = ?", in.Item.ProductId).Take(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		mlog.Warn("AddItem:not found product id:" + strconv.Itoa(int(in.Item.ProductId)))
-		return &cart.AddItemResp{}, nil
+		return &cart.AddItemResp{}, err
 	} else if err != nil {
 		mlog.Error(err.Error())
-		return &cart.AddItemResp{}, nil
+		return &cart.AddItemResp{}, err
 	}
 
 	c := database.CartProducts{CartID: u.Cart.ID, ProductID: uint(in.Item.ProductId), Quantity: uint(in.Item.Quantity)}
 	err = db.Save(&c).Error
 	if err != nil {
 		mlog.Error(err.Error())
-		return &cart.AddItemResp{}, nil
+		return &cart.AddItemResp{}, err
 	}
 
 	return &cart.AddItemResp{}, nil
