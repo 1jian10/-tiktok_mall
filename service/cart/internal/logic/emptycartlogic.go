@@ -4,9 +4,9 @@ import (
 	"context"
 	mlog "mall/log"
 	"mall/model/database"
-
 	"mall/service/cart/internal/svc"
 	"mall/service/cart/proto/cart"
+	"strconv"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -28,17 +28,19 @@ func NewEmptyCartLogic(ctx context.Context, svcCtx *svc.ServiceContext) *EmptyCa
 func (l *EmptyCartLogic) EmptyCart(in *cart.EmptyCartReq) (*cart.EmptyCartResp, error) {
 	db := l.svcCtx.DB
 	c := database.Cart{UserID: uint(in.UserId)}
-	if err := db.Where("user_id = ?", c.UserID).Take(&c).Error; err != nil {
+	if err := db.Preload("Products").Where("user_id = ?", c.UserID).Take(&c).Error; err != nil {
 		mlog.Error(err.Error())
-		return &cart.EmptyCartResp{}, nil
+		return &cart.EmptyCartResp{}, err
 	}
 	ProductID := make([]uint, len(c.Products))
 	for i, v := range c.Products {
 		ProductID[i] = v.ID
 	}
+	mlog.Debug("empty cart_id:" + strconv.Itoa(int(c.ID)))
 	err := db.Where("cart_id = ?", c.ID).Where("product_id in ?", ProductID).Delete(&database.CartProducts{}).Error
 	if err != nil {
 		mlog.Error(err.Error())
+		return &cart.EmptyCartResp{}, err
 	}
 	return &cart.EmptyCartResp{}, nil
 

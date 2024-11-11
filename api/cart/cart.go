@@ -5,6 +5,7 @@ import (
 	"github.com/zeromicro/go-zero/core/discov"
 	"github.com/zeromicro/go-zero/zrpc"
 	mlog "mall/log"
+	"mall/middleware/auth"
 	"mall/service/cart/proto/cart"
 	"net/http"
 )
@@ -20,24 +21,23 @@ func Init(engine *gin.Engine) {
 	})
 	CartClient = cart.NewCartServiceClient(conn.Conn())
 	mlog.SetName("CartAPI")
-	group := engine.Group("/Cart")
+	group := engine.Group("/Cart", auth.ParseToken)
 	{
 		group.POST("/Add", Add)
-		group.GET("/Get", Get)
-		group.GET("/Empty", Empty)
+		group.POST("/Get", Get)
+		group.POST("/Empty", Empty)
 	}
 }
 
 func Add(c *gin.Context) {
-	//v:=c.Value("userid")
-	id := uint32(1)
+	id := c.GetUint("userid")
 	req := cart.AddItemReq{}
 	if err := c.ShouldBind(&req); err != nil {
 		mlog.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
-	req.UserId = id
+	req.UserId = uint32(id)
 	_, err := CartClient.AddItem(c, &req)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"OK": false})
@@ -47,17 +47,15 @@ func Add(c *gin.Context) {
 }
 
 func Get(c *gin.Context) {
-	//v:=c.Value("userid")
-	id := uint32(1)
+	id := c.GetUint("userid")
 
-	resp, _ := CartClient.GetCart(c, &cart.GetCartReq{UserId: id})
+	resp, _ := CartClient.GetCart(c, &cart.GetCartReq{UserId: uint32(id)})
 	c.JSON(http.StatusOK, resp)
 }
 
 func Empty(c *gin.Context) {
-	//v:=c.Value("userid")
-	id := uint32(1)
-	_, err := CartClient.EmptyCart(c, &cart.EmptyCartReq{UserId: id})
+	id := c.GetUint("userid")
+	_, err := CartClient.EmptyCart(c, &cart.EmptyCartReq{UserId: uint32(id)})
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"OK": false})
 		return

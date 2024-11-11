@@ -6,6 +6,7 @@ import (
 	"github.com/zeromicro/go-zero/core/discov"
 	"github.com/zeromicro/go-zero/zrpc"
 	mlog "mall/log"
+	"mall/middleware/auth"
 	"mall/model/api"
 	"mall/service/cart/proto/cart"
 	"mall/service/order/proto/order"
@@ -16,7 +17,7 @@ import (
 var OrderClient order.OrderServiceClient
 var CartClient cart.CartServiceClient
 
-func InitOrder(engine *gin.Engine) {
+func Init(engine *gin.Engine) {
 	OrderConn := zrpc.MustNewClient(zrpc.RpcClientConf{
 		Etcd: discov.EtcdConf{
 			Hosts: []string{"127.0.0.1:4379"},
@@ -33,7 +34,7 @@ func InitOrder(engine *gin.Engine) {
 	CartClient = cart.NewCartServiceClient(CartConn.Conn())
 	mlog.SetName("OrderAPI")
 
-	group := engine.Group("/Order")
+	group := engine.Group("/Order", auth.ParseToken)
 	{
 		group.POST("/CheckOut", CheckOut)
 		group.POST("/Charge", Charge)
@@ -43,16 +44,14 @@ func InitOrder(engine *gin.Engine) {
 }
 
 func List(c *gin.Context) {
-	id := uint32(1)
-	//v:=c.Value("userid")
-	resp, _ := OrderClient.ListOrder(c, &order.ListOrderReq{UserId: id})
+	id := c.GetUint("userid")
+	resp, _ := OrderClient.ListOrder(c, &order.ListOrderReq{UserId: uint32(id)})
 	c.JSON(http.StatusOK, resp.Orders)
 }
 
 func CheckOut(c *gin.Context) {
 	req := api.CheckOutReq{}
-	//v := c.Value("userid")
-	id := uint32(1)
+	id := c.GetUint("userid")
 	//v = c.Value("email")
 	email := ""
 	if err := c.ShouldBind(&req); err != nil {
@@ -62,14 +61,15 @@ func CheckOut(c *gin.Context) {
 	}
 	if len(req.ProductID) == 0 {
 		GetResp, _ := CartClient.GetCart(c, &cart.GetCartReq{
-			UserId: id,
+			UserId: uint32(id),
 		})
+		_, _ = CartClient.EmptyCart(c, &cart.EmptyCartReq{UserId: uint32(id)})
 		for _, v := range GetResp.Items {
 			req.Quantity = append(req.Quantity, v.Quantity)
 			req.ProductID = append(req.ProductID, uint(v.ProductId))
 		}
 	}
-	Make(c, req, id, email)
+	Make(c, req, uint32(id), email)
 }
 
 func Charge(c *gin.Context) {

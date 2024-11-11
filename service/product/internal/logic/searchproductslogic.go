@@ -30,7 +30,7 @@ func NewSearchProductsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Se
 func (l *SearchProductsLogic) SearchProducts(in *product.SearchProductsReq) (*product.SearchProductsResp, error) {
 	db := l.svcCtx.DB
 	p := make([]database.Product, 0)
-	err := db.Where("name LIKE %?%", in.Query).Find(&p).Error
+	err := db.Where("name LIKE ?", "%"+in.Query+"%").Find(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		mlog.Info("not found name like:" + in.Query)
 		return &product.SearchProductsResp{}, nil

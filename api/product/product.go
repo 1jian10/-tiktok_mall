@@ -1,10 +1,12 @@
 package Product
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zeromicro/go-zero/core/discov"
 	"github.com/zeromicro/go-zero/zrpc"
 	mlog "mall/log"
+	"mall/middleware/auth"
 	"mall/model/api"
 	"mall/service/product/proto/product"
 	"net/http"
@@ -16,15 +18,15 @@ func Init(engine *gin.Engine) {
 	ProductConn := zrpc.MustNewClient(zrpc.RpcClientConf{
 		Etcd: discov.EtcdConf{
 			Hosts: []string{"127.0.0.1:4379"},
-			Key:   "order.rpc",
+			Key:   "product.rpc",
 		},
 	})
 	ProductClient = product.NewProductCatalogServiceClient(ProductConn.Conn())
 	mlog.SetName("ProductAPI")
-	group := engine.Group("/Product")
+	group := engine.Group("/Product", auth.ParseToken)
 	{
 		group.POST("/List", List)
-		group.POST("Get", Get)
+		group.POST("/Get", Get)
 		group.POST("/Search", Search)
 		group.POST("/Create", Create)
 		group.POST("/Update", Update)
@@ -39,11 +41,13 @@ func List(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
+	mlog.Debug("ListReq:" + fmt.Sprint(req))
 
 	resp, _ := ProductClient.ListProducts(c, &product.ListProductsReq{
 		Page:     uint32(req.Page),
 		PageSize: uint32(req.PageSize),
 	})
+	mlog.Debug("ListResp:" + fmt.Sprint(resp))
 	c.JSON(http.StatusOK, resp)
 }
 
