@@ -1,6 +1,8 @@
-start "" go run "C:\Code\Go\mall\mysql\ini.go"
-start "UserService" go run "C:\Code\Go\mall\service\user\user.go"
-start "ProductService" go run "C:\Code\Go\mall\service\product\product.go"
-start "CartService" go run "C:\Code\Go\mall\service\cart\cart.go"
-start "OrderService" go run "C:\Code\Go\mall\service\order\order.go"
+@echo off
+
+start cmd /c "cd C:\Code\Go\mall\service\user && go run user.go"
+start cmd /c "cd C:\Code\Go\mall\service\product && go run product.go"
+start cmd /c "cd C:\Code\Go\mall\service\Order && go run Order.go"
+start cmd /c "cd C:\Code\Go\mall\service\cart && go run cart.go"
+
 

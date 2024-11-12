@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/redis/go-redis/v9"
 	"log/slog"
-	mlog "mall/log"
 	"mall/model/database"
 	"strconv"
 	"time"
@@ -32,6 +31,7 @@ func NewGetProductLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetPro
 }
 
 func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetProductResp, error) {
+	log := l.svcCtx.Log
 	db := l.svcCtx.DB
 	rdb := l.svcCtx.RDB
 
@@ -39,7 +39,7 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 	if !errors.Is(err, redis.Nil) {
 		res := product.Product{}
 		if err := json.Unmarshal([]byte(str), &res); err != nil {
-			mlog.Error(err.Error())
+			log.Error(err.Error())
 		} else {
 			return &product.GetProductResp{Product: &res}, nil
 		}
@@ -65,12 +65,12 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 	}
 	j, err := json.Marshal(res.Product)
 	if err != nil {
-		mlog.Warn(err.Error())
+		log.Warn(err.Error())
 		return res, nil
 	}
 	err = rdb.Set(context.Background(), "product:"+strconv.Itoa(int(in.Id)), string(j), time.Minute*30).Err()
 	if err != nil {
-		mlog.Warn(err.Error())
+		log.Warn(err.Error())
 	}
 	return res, nil
 }

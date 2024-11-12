@@ -16,6 +16,7 @@ import (
 
 var OrderClient order.OrderServiceClient
 var CartClient cart.CartServiceClient
+var log *mlog.Log
 
 func Init(engine *gin.Engine) {
 	OrderConn := zrpc.MustNewClient(zrpc.RpcClientConf{
@@ -30,9 +31,9 @@ func Init(engine *gin.Engine) {
 			Key:   "cart.rpc",
 		},
 	})
+	log = mlog.NewLog("OrderAPI")
 	OrderClient = order.NewOrderServiceClient(OrderConn.Conn())
 	CartClient = cart.NewCartServiceClient(CartConn.Conn())
-	mlog.SetName("OrderAPI")
 
 	group := engine.Group("/Order", auth.ParseToken)
 	{
@@ -55,7 +56,7 @@ func CheckOut(c *gin.Context) {
 	//v = c.Value("email")
 	email := ""
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{})
 		return
 	}
@@ -73,16 +74,15 @@ func CheckOut(c *gin.Context) {
 }
 
 func Charge(c *gin.Context) {
-	//v := c.Value("userid")
-	id := uint32(1)
+	id := c.GetUint("userid")
 	req := api.ChargeReq{}
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 	}
 
 	_, err := OrderClient.MarkOrderPaid(context.Background(), &order.MarkOrderPaidReq{
-		UserId:  id,
+		UserId:  uint32(id),
 		OrderId: strconv.Itoa(int(req.OrderId)), //maybe bug
 	})
 	if err != nil {

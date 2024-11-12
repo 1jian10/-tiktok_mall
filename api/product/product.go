@@ -13,6 +13,7 @@ import (
 )
 
 var ProductClient product.ProductCatalogServiceClient
+var log *mlog.Log
 
 func Init(engine *gin.Engine) {
 	ProductConn := zrpc.MustNewClient(zrpc.RpcClientConf{
@@ -22,7 +23,7 @@ func Init(engine *gin.Engine) {
 		},
 	})
 	ProductClient = product.NewProductCatalogServiceClient(ProductConn.Conn())
-	mlog.SetName("ProductAPI")
+	log = mlog.NewLog("ProductAPI")
 	group := engine.Group("/Product", auth.ParseToken)
 	{
 		group.POST("/List", List)
@@ -37,24 +38,24 @@ func Init(engine *gin.Engine) {
 func List(c *gin.Context) {
 	req := api.ListProductsReq{}
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
-	mlog.Debug("ListReq:" + fmt.Sprint(req))
+	log.Debug("ListReq:" + fmt.Sprint(req))
 
 	resp, _ := ProductClient.ListProducts(c, &product.ListProductsReq{
 		Page:     uint32(req.Page),
 		PageSize: uint32(req.PageSize),
 	})
-	mlog.Debug("ListResp:" + fmt.Sprint(resp))
+	log.Debug("ListResp:" + fmt.Sprint(resp))
 	c.JSON(http.StatusOK, resp)
 }
 
 func Get(c *gin.Context) {
 	req := product.GetProductReq{}
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
@@ -65,7 +66,7 @@ func Get(c *gin.Context) {
 func Search(c *gin.Context) {
 	req := product.SearchProductsReq{}
 	if err := c.ShouldBindUri(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
@@ -76,7 +77,7 @@ func Search(c *gin.Context) {
 func Create(c *gin.Context) {
 	req := product.CreateProductsReq{}
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
@@ -87,7 +88,7 @@ func Create(c *gin.Context) {
 func Update(c *gin.Context) {
 	req := product.UpdateProductsReq{}
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
@@ -98,7 +99,7 @@ func Update(c *gin.Context) {
 func Delete(c *gin.Context) {
 	req := product.DeleteProductsReq{}
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}

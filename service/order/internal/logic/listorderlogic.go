@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	mlog "mall/log"
 	"mall/model/database"
 	"strconv"
 
@@ -28,11 +27,12 @@ func NewListOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListOrd
 
 func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp, error) {
 	db := l.svcCtx.DB
+	log := l.svcCtx.Log
 	u := &database.User{}
 	err := db.Preload("Orders.Products").Preload("Orders.Address").Take(&u, in.UserId).Error
-	//mlog.Debug(fmt.Sprintln(u))
+	//log.Debug(fmt.Sprintln(u))
 	if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		return &order.ListOrderResp{Orders: make([]*order.Order, 0)}, nil
 	}
 	res := &order.ListOrderResp{
@@ -57,7 +57,7 @@ func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp
 			op := database.OrderProducts{}
 			err := db.Where("order_id = ?", o.ID).Where("product_id = ?", p.ID).Take(&op).Error
 			if err != nil {
-				mlog.Error(err.Error())
+				log.Error(err.Error())
 			}
 			res.Orders[i].OrderItems[j] = &order.OrderItem{
 				Item: &order.CartItem{

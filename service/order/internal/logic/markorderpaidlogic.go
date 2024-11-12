@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"fmt"
-	mlog "mall/log"
 	"mall/model/database"
 	"time"
 
@@ -30,27 +29,29 @@ func NewMarkOrderPaidLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Mar
 func (l *MarkOrderPaidLogic) MarkOrderPaid(in *order.MarkOrderPaidReq) (*order.MarkOrderPaidResp, error) {
 	rdb := l.svcCtx.RDB
 	db := l.svcCtx.DB
+	log := l.svcCtx.Log
+
 	for {
 		ok, err := rdb.SetNX(context.Background(), "order:lock"+fmt.Sprintln(in.OrderId), "lock", time.Millisecond*50).Result()
 		if err != nil {
-			mlog.Error(err.Error())
+			log.Error(err.Error())
 			continue
 		} else if !ok {
-			mlog.Info("paid get lock false")
+			log.Info("paid get lock false")
 			continue
 		}
 		break
 	}
 	err := db.Model(&database.Order{}).Where("id = ?", in.OrderId).Update("Paid", "True").Error
 	if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		rdb.Del(context.Background(), "order:lock"+fmt.Sprintln(in.OrderId))
 		return &order.MarkOrderPaidResp{}, err
 	}
 
 	err = rdb.Del(context.Background(), "order:lock"+fmt.Sprintln(in.OrderId)).Err()
 	if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 	}
 	return &order.MarkOrderPaidResp{}, nil
 }

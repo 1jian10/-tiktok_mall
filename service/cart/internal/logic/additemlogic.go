@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"gorm.io/gorm"
-	mlog "mall/log"
 	"mall/model/database"
 	"strconv"
 
@@ -30,27 +29,28 @@ func NewAddItemLogic(ctx context.Context, svcCtx *svc.ServiceContext) *AddItemLo
 
 func (l *AddItemLogic) AddItem(in *cart.AddItemReq) (*cart.AddItemResp, error) {
 	db := l.svcCtx.DB
+	log := l.svcCtx.Log
 	p := database.Product{}
 	u := database.User{}
 
 	err := db.Preload("Cart").Where("id = ?", in.UserId).Take(&u).Error
 	if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		return &cart.AddItemResp{}, err
 	}
 	err = db.Where("id = ?", in.Item.ProductId).Take(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		mlog.Warn("AddItem:not found product id:" + strconv.Itoa(int(in.Item.ProductId)))
+		log.Warn("AddItem:not found product id:" + strconv.Itoa(int(in.Item.ProductId)))
 		return &cart.AddItemResp{}, err
 	} else if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		return &cart.AddItemResp{}, err
 	}
 
 	c := database.CartProducts{CartID: u.Cart.ID, ProductID: uint(in.Item.ProductId), Quantity: uint(in.Item.Quantity)}
 	err = db.Save(&c).Error
 	if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		return &cart.AddItemResp{}, err
 	}
 

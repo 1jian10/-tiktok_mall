@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
-	mlog "mall/log"
 	"mall/model/database"
 	"mall/service/order/internal/svc"
 	"mall/service/order/proto/order"
@@ -30,6 +29,7 @@ func NewProcessOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Proc
 func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.ProcessOrderResp, error) {
 	db := l.svcCtx.DB
 	rdb := l.svcCtx.RDB
+	log := l.svcCtx.Log
 	var cost float32
 	for _, val := range in.OrderItems {
 		cost += val.Cost
@@ -51,7 +51,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	err := tx.Create(&o).Error
 	if err != nil {
 		tx.Rollback()
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		return &order.ProcessOrderResp{}, nil
 	}
 	for _, val := range in.OrderItems {
@@ -62,12 +62,12 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		}).Error
 		if err != nil {
 			tx.Rollback()
-			mlog.Error(err.Error())
+			log.Error(err.Error())
 		}
 		res := tx.Model(&database.Product{}).Where("id = ?", val.Item.ProductId).UpdateColumn("Stock", gorm.Expr("Stock - ?", val.Item.Quantity))
 		if res.Error != nil {
 			tx.Rollback()
-			mlog.Error(res.Error.Error())
+			log.Error(res.Error.Error())
 			return &order.ProcessOrderResp{}, nil
 		}
 	}
@@ -77,7 +77,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		Member: o.ID,
 	}).Err()
 	if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 	}
 
 	return &order.ProcessOrderResp{}, nil

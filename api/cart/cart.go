@@ -11,6 +11,7 @@ import (
 )
 
 var CartClient cart.CartServiceClient
+var log *mlog.Log
 
 func Init(engine *gin.Engine) {
 	conn := zrpc.MustNewClient(zrpc.RpcClientConf{
@@ -20,7 +21,7 @@ func Init(engine *gin.Engine) {
 		},
 	})
 	CartClient = cart.NewCartServiceClient(conn.Conn())
-	mlog.SetName("CartAPI")
+	log = mlog.NewLog("CartAPI")
 	group := engine.Group("/Cart", auth.ParseToken)
 	{
 		group.POST("/Add", Add)
@@ -33,7 +34,7 @@ func Add(c *gin.Context) {
 	id := c.GetUint("userid")
 	req := cart.AddItemReq{}
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}

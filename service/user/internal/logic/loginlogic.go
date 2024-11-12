@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	mlog "mall/log"
 	"mall/model/database"
 
 	"mall/service/user/internal/svc"
@@ -28,18 +27,19 @@ func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic 
 }
 
 func (l *LoginLogic) Login(in *user.LoginReq) (*user.LoginResp, error) {
+	log := l.svcCtx.Log
 	db := l.svcCtx.DB
 	u := database.User{}
 
 	res := db.Model(&database.User{}).Where("email = ?", in.Email).Where("password = ?", in.Password).First(&u)
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-		mlog.Info("login:record not found")
+		log.Info("login:record not found")
 		return &user.LoginResp{UserId: 0}, nil
 	} else if res.Error != nil {
-		mlog.Error(res.Error.Error())
+		log.Error(res.Error.Error())
 		return &user.LoginResp{UserId: 0}, nil
 	}
-	mlog.Info("login email:" + in.Email + " " + "password:" + in.Password)
+	log.Info("login email:" + in.Email + " " + "password:" + in.Password)
 
 	return &user.LoginResp{UserId: uint32(u.ID)}, nil
 }

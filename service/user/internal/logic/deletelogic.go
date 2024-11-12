@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	mlog "mall/log"
 	"mall/model/database"
 	"mall/service/user/internal/svc"
 	"mall/service/user/proto/user"
@@ -26,25 +25,26 @@ func NewDeleteLogic(ctx context.Context, svcCtx *svc.ServiceContext) *DeleteLogi
 }
 
 func (l *DeleteLogic) Delete(in *user.DeleteReq) (*user.DeleteResp, error) {
+	log := l.svcCtx.Log
 	db := l.svcCtx.DB
 
 	tx := db.Begin()
 
 	err := tx.Where("user_id = ?", in.UserId).Delete(&database.Cart{}).Error
 	if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		tx.Rollback()
 		return &user.DeleteResp{UserId: 0}, nil
 	}
 	err = tx.Delete(&database.User{}, in.UserId).Error
 	if err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		tx.Rollback()
 		return &user.DeleteResp{UserId: 0}, nil
 	}
 
 	tx.Commit()
 
-	mlog.Info("delete user:" + strconv.Itoa(int(in.UserId)))
+	log.Info("delete user:" + strconv.Itoa(int(in.UserId)))
 	return &user.DeleteResp{UserId: in.UserId}, nil
 }

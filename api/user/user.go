@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/zeromicro/go-zero/core/discov"
 	"github.com/zeromicro/go-zero/zrpc"
@@ -20,20 +21,22 @@ func Init(engine *gin.Engine) {
 		},
 	})
 	UserClient = user.NewUserServiceClient(conn.Conn())
-	mlog.SetName("UserAPI")
+	log = mlog.NewLog("UserAPI")
 	group := engine.Group("/User")
 	{
 		group.POST("/Register", Register)
 		group.POST("/Login", Login)
 		group.POST("/Logout", Logout)
-		group.POST("/Info", Info, auth.ParseToken)
+		group.POST("/Info", auth.ParseToken, Info)
 	}
 }
+
+var log *mlog.Log
 
 func Register(c *gin.Context) {
 	var req user.RegisterReq
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 		return
 	}
@@ -45,7 +48,7 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	var req user.LoginReq
 	if err := c.ShouldBind(&req); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 	}
 	resp, _ := UserClient.Login(c, &req)
@@ -56,6 +59,7 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
+
 	c.Set("userid", uint(resp.UserId))
 	token, err := auth.GetToken(c)
 	if err != nil {
@@ -74,15 +78,17 @@ func Login(c *gin.Context) {
 func Logout(c *gin.Context) {
 	t := auth.Token{}
 	if err := c.ShouldBind(&t); err != nil {
-		mlog.Error(err.Error())
+		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
 	}
+	log.Debug("token:" + t.Token)
 	auth.DeleteToken(t.Token)
 	c.JSON(http.StatusOK, gin.H{})
 }
 
 func Info(c *gin.Context) {
 	id := c.GetUint("userid")
+	log.Debug("userid:" + fmt.Sprint(id))
 	resp, _ := UserClient.Info(c, &user.InfoReq{UserId: uint32(id)})
 	c.JSON(http.StatusOK, resp)
 }

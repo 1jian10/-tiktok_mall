@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	mlog "mall/log"
 	"mall/model/database"
 	"strconv"
 
@@ -27,6 +26,7 @@ func NewCreateProductsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cr
 }
 
 func (l *CreateProductsLogic) CreateProducts(in *product.CreateProductsReq) (*product.CreateProductsResp, error) {
+	log := l.svcCtx.Log
 	db := l.svcCtx.DB
 	res := make([]uint32, len(in.Products))
 	for i, v := range in.Products {
@@ -41,10 +41,10 @@ func (l *CreateProductsLogic) CreateProducts(in *product.CreateProductsReq) (*pr
 			p.Categories = append(p.Categories, database.Categories{Name: c})
 		}
 		if err := db.Model(&database.Product{}).Create(&p).Error; err != nil {
-			mlog.Error(err.Error())
+			log.Error(err.Error())
 			continue
 		}
-		mlog.Info("create product_id:" + strconv.Itoa(int(p.ID)))
+		log.Info("create product_id:" + strconv.Itoa(int(p.ID)))
 		res[i] = uint32(p.ID)
 	}
 	return &product.CreateProductsResp{ProductId: res}, nil

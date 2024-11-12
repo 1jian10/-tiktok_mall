@@ -13,8 +13,8 @@ func main() {
 
 	order.Init(engine)
 	cart.Init(engine)
-	Product.Init(engine)
 	user.Init(engine)
+	Product.Init(engine)
 
 	err := engine.Run("0.0.0.0:23333")
 	if err != nil {
