@@ -1,4 +1,4 @@
-package api
+package order
 
 type CheckOutReq struct {
 	ProductID []uint  `json:"product_id"`

@@ -3,6 +3,7 @@ package svc
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/singleflight"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	mlog "mall/log"
@@ -14,6 +15,7 @@ type ServiceContext struct {
 	DB     *gorm.DB
 	RDB    *redis.Client
 	Log    *mlog.Log
+	Group  singleflight.Group
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {

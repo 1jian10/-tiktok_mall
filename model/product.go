@@ -1,4 +1,4 @@
-package database
+package model
 
 import (
 	"gorm.io/gorm"
@@ -6,11 +6,12 @@ import (
 
 type Product struct {
 	gorm.Model
-	Name        string  `gorm:"unique" json:"name"`
-	Description string  `json:"description"`
-	Picture     string  `json:"picture"`
-	Price       float32 `json:"price"`
-	Stock       uint
+	Name      string  `gorm:"unique" json:"name"`
+	ImagePath string  `json:"image_path"`
+	FilePath  string  `json:"file_path"`
+	Price     float32 `json:"price"`
+	Deleted   string
+	Stock     uint
 
 	Carts      []Cart       `gorm:"many2many:cart_products" json:"-"`
 	Orders     []Order      `gorm:"many2many:order_products" json:"-"`

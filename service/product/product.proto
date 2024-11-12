@@ -21,10 +21,9 @@ message ListProductsReq{
 message Product {
   uint32 id = 1;
   string name = 2;
-  string description = 3;
-  string picture = 4;
+  string file_path = 3;
+  string image_path = 4;
   float price = 5;
-  uint32 stock=6;
 
   repeated string categories = 7;
 }
@@ -43,6 +42,7 @@ message GetProductResp {
 
 message SearchProductsReq {
   string query = 1;
+  string method=2;
 }
 
 message SearchProductsResp {
@@ -51,6 +51,7 @@ message SearchProductsResp {
 
 message CreateProductsReq{
   repeated Product products=1;
+  repeated uint32 stock =2;
 }
 
 message CreateProductsResp{
@@ -59,6 +60,7 @@ message CreateProductsResp{
 
 message UpdateProductsReq{
   repeated Product products=1;
+  uint32 stock =2;
 }
 
 message UpdateProductsResp{

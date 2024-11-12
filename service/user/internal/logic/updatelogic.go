@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"mall/model"
 
 	"mall/service/user/internal/svc"
 	"mall/service/user/proto/user"
@@ -24,7 +25,12 @@ func NewUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UpdateLogi
 }
 
 func (l *UpdateLogic) Update(in *user.UpdateReq) (*user.UpdateResp, error) {
-	// todo: add your logic here and delete this line
-
+	db := l.svcCtx.DB
+	log := l.svcCtx.Log
+	res := db.Model(&model.User{}).Where("id = ?", in.UserId).Update("password", in.Password)
+	if res.Error != nil {
+		log.Error(res.Error.Error())
+		return nil, res.Error
+	}
 	return &user.UpdateResp{}, nil
 }

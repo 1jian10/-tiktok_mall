@@ -8,16 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	mlog "mall/log"
-	"mall/model/auth"
 	"net/http"
 	"strconv"
 	"time"
 )
-
-type Token struct {
-	Token string `header:"Authorization" binding:"required"`
-	Ctx   *gin.Context
-}
 
 var log *mlog.Log
 
@@ -43,7 +37,7 @@ func GetToken(c *gin.Context) (string, error) {
 		return res, nil
 	}
 
-	claims := auth.MyClaims{
+	claims := MyClaims{
 		Userid: id,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour).Unix(),
@@ -73,7 +67,7 @@ func DeleteToken(token string) {
 		log.Warn(err.Error())
 		return
 	}
-	var m auth.MyClaims
+	var m MyClaims
 	err = json.Unmarshal([]byte(str), &m)
 	if err != nil {
 		log.Warn(err.Error())
@@ -106,7 +100,7 @@ func (t Token) withRedis() {
 	}
 	log.Debug("get from redis" + fmt.Sprint(res))
 
-	var m auth.MyClaims
+	var m MyClaims
 	err = json.Unmarshal([]byte(res), &m)
 	if err != nil {
 		log.Error(err.Error())
@@ -122,7 +116,7 @@ func (t Token) withRedis() {
 
 func (t Token) direct() {
 	c := t.Ctx
-	token, err := jwt.ParseWithClaims(t.Token, &auth.MyClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(t.Token, &MyClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return Key, nil
 	})
 	if err != nil {
@@ -137,7 +131,7 @@ func (t Token) direct() {
 		c.Abort()
 		return
 	}
-	c.Set("userid", token.Claims.(*auth.MyClaims).Userid)
+	c.Set("userid", token.Claims.(*MyClaims).Userid)
 	c.Next()
 	return
 }

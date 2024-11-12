@@ -1,4 +1,4 @@
-package database
+package model
 
 import (
 	"gorm.io/gorm"
@@ -14,6 +14,15 @@ type Order struct {
 	Products  []Product `gorm:"many2many:order_products"`
 	AddressID uint      `gorm:"foreignKey:AddressID"`
 	Address   *Address
+}
+
+type Address struct {
+	gorm.Model
+	StreetAddress string
+	City          string
+	State         string
+	Country       string
+	ZipCode       int32
 }
 
 type OrderProducts struct {

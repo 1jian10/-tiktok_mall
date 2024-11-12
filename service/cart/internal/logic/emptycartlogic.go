@@ -2,7 +2,7 @@ package logic
 
 import (
 	"context"
-	"mall/model/database"
+	"mall/model"
 	"mall/service/cart/internal/svc"
 	"mall/service/cart/proto/cart"
 	"strconv"
@@ -27,20 +27,21 @@ func NewEmptyCartLogic(ctx context.Context, svcCtx *svc.ServiceContext) *EmptyCa
 func (l *EmptyCartLogic) EmptyCart(in *cart.EmptyCartReq) (*cart.EmptyCartResp, error) {
 	db := l.svcCtx.DB
 	log := l.svcCtx.Log
-	c := database.Cart{UserID: uint(in.UserId)}
+	c := model.Cart{UserID: uint(in.UserId)}
+
 	if err := db.Preload("Products").Where("user_id = ?", c.UserID).Take(&c).Error; err != nil {
-		log.Error(err.Error())
-		return &cart.EmptyCartResp{}, err
+		log.Error("get cart with products:" + err.Error())
+		return nil, err
 	}
 	ProductID := make([]uint, len(c.Products))
 	for i, v := range c.Products {
 		ProductID[i] = v.ID
 	}
 	log.Debug("empty cart_id:" + strconv.Itoa(int(c.ID)))
-	err := db.Where("cart_id = ?", c.ID).Where("product_id in ?", ProductID).Delete(&database.CartProducts{}).Error
+	err := db.Where("cart_id = ?", c.ID).Where("product_id in ?", ProductID).Delete(&model.CartProducts{}).Error
 	if err != nil {
-		log.Error(err.Error())
-		return &cart.EmptyCartResp{}, err
+		log.Error("empty cart:" + err.Error())
+		return nil, err
 	}
 	return &cart.EmptyCartResp{}, nil
 

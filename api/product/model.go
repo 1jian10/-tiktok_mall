@@ -1,4 +1,4 @@
-package api
+package Product
 
 type ListProductsReq struct {
 	Page     uint `json:"page"`

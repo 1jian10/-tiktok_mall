@@ -2,7 +2,7 @@ package logic
 
 import (
 	"context"
-	"mall/model/database"
+	"mall/model"
 	"mall/service/user/internal/svc"
 	"mall/service/user/proto/user"
 	"strconv"
@@ -30,17 +30,17 @@ func (l *DeleteLogic) Delete(in *user.DeleteReq) (*user.DeleteResp, error) {
 
 	tx := db.Begin()
 
-	err := tx.Where("user_id = ?", in.UserId).Delete(&database.Cart{}).Error
+	err := tx.Where("user_id = ?", in.UserId).Delete(&model.Cart{}).Error
 	if err != nil {
 		log.Error(err.Error())
 		tx.Rollback()
-		return &user.DeleteResp{UserId: 0}, nil
+		return nil, err
 	}
-	err = tx.Delete(&database.User{}, in.UserId).Error
+	err = tx.Delete(&model.User{}, in.UserId).Error
 	if err != nil {
 		log.Error(err.Error())
 		tx.Rollback()
-		return &user.DeleteResp{UserId: 0}, nil
+		return nil, err
 	}
 
 	tx.Commit()

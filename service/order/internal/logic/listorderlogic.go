@@ -2,7 +2,7 @@ package logic
 
 import (
 	"context"
-	"mall/model/database"
+	"mall/model"
 	"strconv"
 
 	"mall/service/order/internal/svc"
@@ -28,12 +28,12 @@ func NewListOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ListOrd
 func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp, error) {
 	db := l.svcCtx.DB
 	log := l.svcCtx.Log
-	u := &database.User{}
+	u := &model.User{}
+
 	err := db.Preload("Orders.Products").Preload("Orders.Address").Take(&u, in.UserId).Error
-	//log.Debug(fmt.Sprintln(u))
 	if err != nil {
-		log.Error(err.Error())
-		return &order.ListOrderResp{Orders: make([]*order.Order, 0)}, nil
+		log.Error("take User order:" + err.Error())
+		return nil, err
 	}
 	res := &order.ListOrderResp{
 		Orders: make([]*order.Order, len(u.Orders)),
@@ -42,7 +42,6 @@ func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp
 		res.Orders[i] = &order.Order{
 			OrderItems:   make([]*order.OrderItem, len(o.Products)),
 			OrderId:      strconv.Itoa(int(o.ID)),
-			UserId:       uint32(o.UserID),
 			UserCurrency: o.Currency,
 			Address: &order.Address{
 				StreetAddress: o.Address.StreetAddress,
@@ -54,17 +53,15 @@ func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp
 			Email: u.Email,
 		}
 		for j, p := range o.Products {
-			op := database.OrderProducts{}
+			op := model.OrderProducts{}
 			err := db.Where("order_id = ?", o.ID).Where("product_id = ?", p.ID).Take(&op).Error
 			if err != nil {
-				log.Error(err.Error())
+				log.Error("search order:" + err.Error())
+				return nil, err
 			}
 			res.Orders[i].OrderItems[j] = &order.OrderItem{
-				Item: &order.CartItem{
-					ProductId: uint32(p.ID),
-					Quantity:  int32(op.Quantity),
-				},
-				Cost: p.Price * float32(op.Quantity),
+				ProductId: uint32(op.ProductID),
+				Quantity:  int32(op.Quantity),
 			}
 		}
 	}

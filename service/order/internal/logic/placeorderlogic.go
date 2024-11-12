@@ -2,9 +2,8 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"github.com/redis/go-redis/v9"
-	"mall/model/database"
+	"mall/model"
 	"strconv"
 	"time"
 
@@ -35,12 +34,12 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 	key := make([]string, 0)
 	decr := make([]uint, 0)
 
-	for _, item := range in.Items {
-		id := strconv.Itoa(int(item.ProductId))
-		for ; ; time.Sleep(time.Millisecond * 50) {
+	for i, pid := range in.ProductId {
+		id := strconv.Itoa(int(pid))
+		for ; ; time.Sleep(time.Millisecond * 10) {
 			ok, err := rdb.SetNX(context.Background(), "product:lock:"+id, "lock", time.Millisecond*100).Result()
 			if err != nil {
-				log.Error(err.Error())
+				log.Warn("place order get lock:" + err.Error())
 				continue
 			} else if !ok {
 				log.Info("get lock failed")
@@ -49,47 +48,45 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 			break
 		}
 		stock, err := rdb.Get(context.Background(), "product:stock:"+id).Result()
-		if !errors.Is(err, redis.Nil) {
+		if err == nil {
 			log.Info("stock get from redis")
 			s, _ := strconv.Atoi(stock)
-			if s-int(item.Quantity) < 0 {
+			if s-int(in.Quantity[i]) < 0 {
 				log.Info("stock not enough...rollback")
 				rollback(key, decr, rdb)
-				return &order.PlaceOrderResp{Success: "No"}, nil
+				return nil, err
 			}
-			rdb.DecrBy(context.Background(), "product:stock:"+id, int64(item.Quantity))
+			rdb.DecrBy(context.Background(), "product:stock:"+id, int64(in.Quantity[i]))
 			rdb.Expire(context.Background(), "product:stock:"+id, time.Minute*30)
 			key = append(key, "product:stock:"+id)
-			decr = append(decr, uint(item.Quantity))
+			decr = append(decr, uint(in.Quantity[i]))
 			continue
 		}
-		p := database.Product{}
-		err = db.Select("Stock").Take(&p, item.ProductId).Error
+
+		product := model.Product{}
+		err = db.Select("Stock").Take(&product, pid).Error
 		if err != nil {
-			log.Error(err.Error())
+			log.Error("take product id:" + id + ":" + err.Error())
 			log.Error("rollback")
 			rollback(key, decr, rdb)
-			return &order.PlaceOrderResp{Success: "No"}, nil
-		} else if p.Stock-uint(item.Quantity) < 0 {
-			rdb.Set(context.Background(), "product:stock:"+id, strconv.Itoa(int(p.Stock)), time.Minute*30)
+			return nil, err
+		} else if product.Stock-uint(in.Quantity[i]) < 0 {
+			rdb.Set(context.Background(), "product:stock:"+id, strconv.Itoa(int(product.ID)), time.Minute*30)
 			log.Info("stock not enough...rollback")
 			rollback(key, decr, rdb)
-			return &order.PlaceOrderResp{Success: "No"}, nil
+			return nil, err
 		}
-		rdb.Set(context.Background(), "product:stock:"+id, strconv.Itoa(int(p.Stock)-int(item.Quantity)), time.Minute*30)
+		rdb.Set(context.Background(), "product:stock:"+id, strconv.Itoa(int(product.Stock)-int(in.Quantity[i])), time.Minute*30)
 		key = append(key, "product:stock:"+id)
-		decr = append(decr, uint(item.Quantity))
+		decr = append(decr, uint(in.Quantity[i]))
 
 		_, err = rdb.Del(context.Background(), "product:lock:"+id).Result()
 		if err != nil {
-			log.Error(err.Error())
+			log.Error("place order del lock:" + err.Error())
 		}
 
 	}
-	return &order.PlaceOrderResp{
-		Success: "Yes",
-	}, nil
-
+	return &order.PlaceOrderResp{}, nil
 }
 
 func rollback(key []string, stock []uint, rdb *redis.Client) {

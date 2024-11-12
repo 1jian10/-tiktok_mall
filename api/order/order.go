@@ -7,7 +7,6 @@ import (
 	"github.com/zeromicro/go-zero/zrpc"
 	mlog "mall/log"
 	"mall/middleware/auth"
-	"mall/model/api"
 	"mall/service/cart/proto/cart"
 	"mall/service/order/proto/order"
 	"net/http"
@@ -51,7 +50,7 @@ func List(c *gin.Context) {
 }
 
 func CheckOut(c *gin.Context) {
-	req := api.CheckOutReq{}
+	req := CheckOutReq{}
 	id := c.GetUint("userid")
 	//v = c.Value("email")
 	email := ""
@@ -75,7 +74,7 @@ func CheckOut(c *gin.Context) {
 
 func Charge(c *gin.Context) {
 	id := c.GetUint("userid")
-	req := api.ChargeReq{}
+	req := ChargeReq{}
 	if err := c.ShouldBind(&req); err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})
@@ -86,13 +85,13 @@ func Charge(c *gin.Context) {
 		OrderId: strconv.Itoa(int(req.OrderId)), //maybe bug
 	})
 	if err != nil {
-		c.JSON(http.StatusOK, api.ChargeResp{Success: false})
+		c.JSON(http.StatusOK, ChargeResp{Success: false})
 	} else {
-		c.JSON(http.StatusOK, api.ChargeResp{Success: true})
+		c.JSON(http.StatusOK, ChargeResp{Success: true})
 	}
 }
 
-func Make(c *gin.Context, req api.CheckOutReq, id uint32, email string) {
+func Make(c *gin.Context, req CheckOutReq, id uint32, email string) {
 	PlaceReq := order.PlaceOrderReq{
 		Items:  make([]*order.CartItem, len(req.ProductID)),
 		UserId: id,
@@ -105,7 +104,7 @@ func Make(c *gin.Context, req api.CheckOutReq, id uint32, email string) {
 	}
 	PlaceResp, _ := OrderClient.PlaceOrder(c, &PlaceReq)
 	if PlaceResp.Success == "Yes" {
-		c.JSON(http.StatusOK, &api.CheckOutResp{
+		c.JSON(http.StatusOK, &CheckOutResp{
 			Success: true,
 		})
 		ProcessReq := &order.ProcessOrderReq{
@@ -132,7 +131,7 @@ func Make(c *gin.Context, req api.CheckOutReq, id uint32, email string) {
 		}
 		_, _ = OrderClient.ProcessOrder(c, ProcessReq)
 	} else {
-		c.JSON(http.StatusOK, api.CheckOutResp{
+		c.JSON(http.StatusOK, CheckOutResp{
 			Success: false,
 		})
 	}

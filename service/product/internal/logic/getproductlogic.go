@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/redis/go-redis/v9"
-	"log/slog"
-	"mall/model/database"
+	"mall/model"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -34,30 +34,43 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 	log := l.svcCtx.Log
 	db := l.svcCtx.DB
 	rdb := l.svcCtx.RDB
+	group := &l.svcCtx.Group
+	idstr := strconv.Itoa(int(in.Id))
 
-	str, err := rdb.Get(context.Background(), "product:"+"all:"+strconv.Itoa(int(in.Id))).Result()
-	if !errors.Is(err, redis.Nil) {
+	str, err := rdb.Get(context.Background(), "product:"+idstr).Result()
+	if err == nil {
+		log.Info("get product form redis id:" + idstr)
 		res := product.Product{}
 		if err := json.Unmarshal([]byte(str), &res); err != nil {
-			log.Error(err.Error())
+			log.Warn("json unmarshal:" + err.Error())
 		} else {
 			return &product.GetProductResp{Product: &res}, nil
 		}
+	} else if errors.Is(err, redis.Nil) {
+		log.Info("product not in redis id:" + idstr)
+	} else {
+		log.Warn("get product form redis:" + err.Error())
 	}
-	p := database.Product{}
-	err = db.Preload("Categories").Where("id = ?", in.Id).Take(&p).Error
+
+	ans, err, _ := group.Do("id:"+idstr, func() (interface{}, error) {
+		p := model.Product{}
+		err := db.Preload("Categories").Where("id = ?", in.Id).Take(&p).Error
+		return p, err
+	})
+	p := ans.(model.Product)
 	if err != nil {
-		slog.Error(err.Error())
-		return &product.GetProductResp{Product: &product.Product{Id: 0}}, nil
+		log.Error("take product:" + err.Error())
+		return nil, err
 	}
+
 	res := &product.GetProductResp{
 		Product: &product.Product{
-			Id:          uint32(p.ID),
-			Name:        p.Name,
-			Description: p.Description,
-			Picture:     p.Picture,
-			Price:       p.Price,
-			Categories:  make([]string, len(p.Categories)),
+			Id:         uint32(p.ID),
+			Name:       p.Name,
+			FilePath:   p.FilePath,
+			ImagePath:  p.ImagePath,
+			Price:      p.Price,
+			Categories: make([]string, len(p.Categories)),
 		},
 	}
 	for i, v := range p.Categories {
@@ -65,12 +78,12 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 	}
 	j, err := json.Marshal(res.Product)
 	if err != nil {
-		log.Warn(err.Error())
-		return res, nil
+		log.Error("json marshal:" + err.Error())
+		return nil, err
 	}
-	err = rdb.Set(context.Background(), "product:"+strconv.Itoa(int(in.Id)), string(j), time.Minute*30).Err()
+	err = rdb.Set(context.Background(), "product:"+strconv.Itoa(int(in.Id)), string(j), time.Second*(1800+time.Duration(rand.Int()%100)*10)).Err()
 	if err != nil {
-		log.Warn(err.Error())
+		log.Warn("set product in redis:" + err.Error())
 	}
 	return res, nil
 }

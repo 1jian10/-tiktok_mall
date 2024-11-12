@@ -15,7 +15,6 @@ import (
 
 type (
 	Address           = order.Address
-	CartItem          = order.CartItem
 	ListOrderReq      = order.ListOrderReq
 	ListOrderResp     = order.ListOrderResp
 	MarkOrderPaidReq  = order.MarkOrderPaidReq

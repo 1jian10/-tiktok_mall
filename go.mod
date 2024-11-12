@@ -8,6 +8,7 @@ require (
 	github.com/nsqio/go-nsq v1.1.0
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/zeromicro/go-zero v1.7.3
+	golang.org/x/sync v0.8.0
 	google.golang.org/grpc v1.67.1
 	google.golang.org/protobuf v1.35.1
 	gorm.io/driver/mysql v1.5.7

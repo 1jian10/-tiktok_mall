@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	"mall/model/database"
+	"mall/model"
 	"mall/service/order/internal/config"
 	"mall/service/order/internal/server"
 	"mall/service/order/internal/svc"
@@ -71,7 +71,7 @@ func OrderHandle(ctx *svc.ServiceContext) {
 			}
 			rdb.ZRem(context.Background(), "order:time", v)
 			log.Info("delete" + fmt.Sprint(v))
-			err = db.Where("paid = ?", "False").Delete(&database.Order{}, v).Error
+			err = db.Where("paid = ?", "False").Delete(&model.Order{}, v).Error
 			if err != nil {
 				log.Error(err.Error())
 			}

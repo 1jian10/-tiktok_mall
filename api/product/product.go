@@ -7,7 +7,6 @@ import (
 	"github.com/zeromicro/go-zero/zrpc"
 	mlog "mall/log"
 	"mall/middleware/auth"
-	"mall/model/api"
 	"mall/service/product/proto/product"
 	"net/http"
 )
@@ -36,7 +35,7 @@ func Init(engine *gin.Engine) {
 }
 
 func List(c *gin.Context) {
-	req := api.ListProductsReq{}
+	req := ListProductsReq{}
 	if err := c.ShouldBind(&req); err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{})

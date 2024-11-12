@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 	"gorm.io/gorm"
-	"mall/model/database"
-
+	"mall/model"
 	"mall/service/product/internal/svc"
 	"mall/service/product/proto/product"
 
@@ -27,17 +26,26 @@ func NewSearchProductsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Se
 }
 
 func (l *SearchProductsLogic) SearchProducts(in *product.SearchProductsReq) (*product.SearchProductsResp, error) {
+
+	if in.Method == "name" {
+		return l.SearchWithName(in)
+	}
+	return nil, nil
+}
+
+func (l *SearchProductsLogic) SearchWithName(in *product.SearchProductsReq) (*product.SearchProductsResp, error) {
 	log := l.svcCtx.Log
 	db := l.svcCtx.DB
-	p := make([]database.Product, 0)
+	p := make([]model.Product, 0)
 
-	err := db.Where("name LIKE ?", "%"+in.Query+"%").Find(&p).Error
+	log.Info("search product name:" + in.Query)
+	err := db.Where("name LIKE ?", "%"+in.Query+"%").Limit(30).Find(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Info("not found name like:" + in.Query)
 		return &product.SearchProductsResp{}, nil
 	} else if err != nil {
 		log.Error(err.Error())
-		return &product.SearchProductsResp{}, nil
+		return nil, err
 	}
 
 	res := &product.SearchProductsResp{
@@ -45,12 +53,12 @@ func (l *SearchProductsLogic) SearchProducts(in *product.SearchProductsReq) (*pr
 	}
 	for i, v := range p {
 		res.Results[i] = &product.Product{
-			Id:          uint32(v.ID),
-			Name:        v.Name,
-			Description: v.Description,
-			Price:       v.Price,
-			Picture:     v.Picture,
-			Categories:  make([]string, len(v.Categories)),
+			Id:         uint32(v.ID),
+			Name:       v.Name,
+			FilePath:   v.FilePath,
+			Price:      v.Price,
+			ImagePath:  v.ImagePath,
+			Categories: make([]string, len(v.Categories)),
 		}
 		for j, c := range v.Categories {
 			res.Results[i].Categories[j] = c.Name

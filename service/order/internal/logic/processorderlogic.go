@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
-	"mall/model/database"
+	"mall/model"
 	"mall/service/order/internal/svc"
 	"mall/service/order/proto/order"
 	"time"
@@ -31,15 +31,11 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	rdb := l.svcCtx.RDB
 	log := l.svcCtx.Log
 	var cost float32
-	for _, val := range in.OrderItems {
-		cost += val.Cost
-	}
-	o := database.Order{
+	o := model.Order{
 		Currency: in.UserCurrency,
 		Paid:     "False",
-		Cost:     cost,
 		UserID:   uint(in.UserId),
-		Address: &database.Address{
+		Address: &model.Address{
 			StreetAddress: in.Address.StreetAddress,
 			City:          in.Address.City,
 			State:         in.Address.State,
@@ -48,28 +44,37 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		},
 	}
 	tx := db.Begin()
-	err := tx.Create(&o).Error
-	if err != nil {
-		tx.Rollback()
-		log.Error(err.Error())
-		return &order.ProcessOrderResp{}, nil
-	}
 	for _, val := range in.OrderItems {
-		err = tx.Create(&database.OrderProducts{
+		err := tx.Create(&model.OrderProducts{
 			OrderID:   o.ID,
-			ProductID: uint(val.Item.ProductId),
-			Quantity:  uint(val.Item.Quantity),
+			ProductID: uint(val.ProductId),
+			Quantity:  uint(val.Quantity),
 		}).Error
 		if err != nil {
 			tx.Rollback()
-			log.Error(err.Error())
+			log.Error("create order_products:" + err.Error())
 		}
-		res := tx.Model(&database.Product{}).Where("id = ?", val.Item.ProductId).UpdateColumn("Stock", gorm.Expr("Stock - ?", val.Item.Quantity))
+		res := tx.Model(&model.Product{}).Where("id = ?", val.ProductId).UpdateColumn("Stock", gorm.Expr("Stock - ?", val.Quantity))
 		if res.Error != nil {
 			tx.Rollback()
 			log.Error(res.Error.Error())
-			return &order.ProcessOrderResp{}, nil
+			return nil, err
 		}
+		p := model.Product{}
+		res = tx.Where("id = ?", val.ProductId).Select("Price").Take(&p)
+		if res.Error != nil {
+			tx.Rollback()
+			log.Error("process order get product:" + res.Error.Error())
+			return nil, res.Error
+		}
+		cost += p.Price * float32(val.Quantity)
+	}
+	o.Cost = cost
+	err := tx.Create(&o).Error
+	if err != nil {
+		tx.Rollback()
+		log.Error("create order" + err.Error())
+		return nil, err
 	}
 	tx.Commit()
 	err = rdb.ZAdd(context.Background(), "order:time", redis.Z{
@@ -77,7 +82,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		Member: o.ID,
 	}).Err()
 	if err != nil {
-		log.Error(err.Error())
+		log.Error("set order time:" + err.Error())
 	}
 
 	return &order.ProcessOrderResp{}, nil
