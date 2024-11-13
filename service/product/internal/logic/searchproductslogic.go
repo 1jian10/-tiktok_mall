@@ -39,7 +39,7 @@ func (l *SearchProductsLogic) SearchWithName(in *product.SearchProductsReq) (*pr
 	p := make([]model.Product, 0)
 
 	log.Info("search product name:" + in.Query)
-	err := db.Where("name LIKE ?", "%"+in.Query+"%").Limit(30).Find(&p).Error
+	err := db.Preload("Categories").Where("name LIKE ?", "%"+in.Query+"%").Limit(30).Find(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Info("not found name like:" + in.Query)
 		return &product.SearchProductsResp{}, nil

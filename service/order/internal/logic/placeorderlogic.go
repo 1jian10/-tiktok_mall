@@ -53,7 +53,7 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 			s, _ := strconv.Atoi(stock)
 			if s-int(in.Quantity[i]) < 0 {
 				log.Info("stock not enough...rollback")
-				rollback(key, decr, rdb)
+				rollback(key, decr, rdb, "product:stock:"+id)
 				return nil, err
 			}
 			rdb.DecrBy(context.Background(), "product:stock:"+id, int64(in.Quantity[i]))
@@ -68,12 +68,12 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 		if err != nil {
 			log.Error("take product id:" + id + ":" + err.Error())
 			log.Error("rollback")
-			rollback(key, decr, rdb)
+			rollback(key, decr, rdb, "product:stock:"+id)
 			return nil, err
 		} else if product.Stock-uint(in.Quantity[i]) < 0 {
 			rdb.Set(context.Background(), "product:stock:"+id, strconv.Itoa(int(product.ID)), time.Minute*30)
 			log.Info("stock not enough...rollback")
-			rollback(key, decr, rdb)
+			rollback(key, decr, rdb, "product:stock:"+id)
 			return nil, err
 		}
 		rdb.Set(context.Background(), "product:stock:"+id, strconv.Itoa(int(product.Stock)-int(in.Quantity[i])), time.Minute*30)
@@ -84,13 +84,13 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 		if err != nil {
 			log.Error("place order del lock:" + err.Error())
 		}
-
 	}
 	return &order.PlaceOrderResp{}, nil
 }
 
-func rollback(key []string, stock []uint, rdb *redis.Client) {
+func rollback(key []string, stock []uint, rdb *redis.Client, mutex string) {
 	for i := range key {
 		rdb.IncrBy(context.Background(), key[i], int64(stock[i]))
 	}
+	rdb.Del(context.Background(), mutex)
 }

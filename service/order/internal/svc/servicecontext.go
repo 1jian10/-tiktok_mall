@@ -14,6 +14,7 @@ type ServiceContext struct {
 	DB     *gorm.DB
 	RDB    *redis.Client
 	Log    *mlog.Log
+	IsSync bool
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {

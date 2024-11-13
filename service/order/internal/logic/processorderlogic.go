@@ -7,6 +7,7 @@ import (
 	"mall/model"
 	"mall/service/order/internal/svc"
 	"mall/service/order/proto/order"
+	"strconv"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -45,20 +46,11 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	}
 	tx := db.Begin()
 	for _, val := range in.OrderItems {
-		err := tx.Create(&model.OrderProducts{
-			OrderID:   o.ID,
-			ProductID: uint(val.ProductId),
-			Quantity:  uint(val.Quantity),
-		}).Error
-		if err != nil {
-			tx.Rollback()
-			log.Error("create order_products:" + err.Error())
-		}
 		res := tx.Model(&model.Product{}).Where("id = ?", val.ProductId).UpdateColumn("Stock", gorm.Expr("Stock - ?", val.Quantity))
 		if res.Error != nil {
 			tx.Rollback()
 			log.Error(res.Error.Error())
-			return nil, err
+			return nil, res.Error
 		}
 		p := model.Product{}
 		res = tx.Where("id = ?", val.ProductId).Select("Price").Take(&p)
@@ -75,6 +67,18 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		tx.Rollback()
 		log.Error("create order" + err.Error())
 		return nil, err
+	}
+	log.Info("create order id:" + strconv.FormatUint(uint64(o.ID), 10))
+	for _, val := range in.OrderItems {
+		err := tx.Create(&model.OrderProducts{
+			OrderID:   o.ID,
+			ProductID: uint(val.ProductId),
+			Quantity:  uint(val.Quantity),
+		}).Error
+		if err != nil {
+			tx.Rollback()
+			log.Error("create order_products:" + err.Error())
+		}
 	}
 	tx.Commit()
 	err = rdb.ZAdd(context.Background(), "order:time", redis.Z{
