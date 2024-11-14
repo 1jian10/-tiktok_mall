@@ -23,11 +23,11 @@ func Init(engine *gin.Engine) {
 	log = mlog.NewLog("ProductAPI")
 	group := engine.Group("/Product", auth.ParseToken)
 	{
-		group.GET("/Get", Get)
 		group.PUT("/Update", Update)
+		group.POST("/Get", Get)
 		group.POST("/List", List)
 		group.POST("/Search", Search)
 		group.POST("/Create", Create)
-		group.DELETE("/delete", Delete)
+		group.DELETE("/Delete", Delete)
 	}
 }

@@ -15,6 +15,7 @@ var OrderClient order.OrderServiceClient
 var CartClient cart.CartServiceClient
 var log *mlog.Log
 var producer *nsq.Producer
+var IsSync = false
 
 func Init(engine *gin.Engine) {
 	OrderConn := zrpc.MustNewClient(zrpc.RpcClientConf{
@@ -43,6 +44,6 @@ func Init(engine *gin.Engine) {
 	{
 		group.POST("/CheckOut", CheckOut)
 		group.POST("/Charge", Charge)
-		group.POST("/List", List)
+		group.GET("/List", List)
 	}
 }

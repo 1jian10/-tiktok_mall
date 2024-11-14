@@ -7,6 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"mall/api"
 	mlog "mall/log"
 	"net/http"
 	"strconv"
@@ -94,7 +95,12 @@ func (t Token) withRedis() {
 	res, err := RDB.Get(c, "token:"+t.Token).Result()
 	if err != nil {
 		log.Info("get token fail:" + err.Error())
-		c.JSON(http.StatusForbidden, gin.H{})
+		c.JSON(http.StatusOK, AuthResp{
+			Status: api.Status{
+				Code:     api.FORBIDDEN,
+				ErrorMsg: "you need login to use it",
+			},
+		})
 		c.Abort()
 		return
 	}
@@ -104,7 +110,12 @@ func (t Token) withRedis() {
 	err = json.Unmarshal([]byte(res), &m)
 	if err != nil {
 		log.Error(err.Error())
-		c.JSON(http.StatusInternalServerError, gin.H{})
+		c.JSON(http.StatusOK, AuthResp{
+			Status: api.Status{
+				Code:     api.ERROR,
+				ErrorMsg: "json unmarshal failed",
+			},
+		})
 		c.Abort()
 		return
 	}
@@ -121,13 +132,23 @@ func (t Token) direct() {
 	})
 	if err != nil {
 		log.Info("direct parse token fail:" + err.Error())
-		c.JSON(http.StatusForbidden, gin.H{})
+		c.JSON(http.StatusOK, AuthResp{
+			Status: api.Status{
+				Code:     api.FORBIDDEN,
+				ErrorMsg: "parse token failed",
+			},
+		})
 		c.Abort()
 		return
 	}
 	if !token.Valid {
 		log.Info("token is invalid")
-		c.JSON(http.StatusForbidden, gin.H{})
+		c.JSON(http.StatusOK, AuthResp{
+			Status: api.Status{
+				Code:     api.FORBIDDEN,
+				ErrorMsg: "token is invalid",
+			},
+		})
 		c.Abort()
 		return
 	}

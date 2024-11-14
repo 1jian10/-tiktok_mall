@@ -43,6 +43,7 @@ func CheckOut(c *gin.Context) {
 		})
 		return
 	}
+	req.UserId = uint32(id)
 
 	if len(req.OrderItems) == 0 {
 		GetResp, err := CartClient.GetCart(c, &cart.GetCartReq{UserId: uint32(id)})
@@ -63,7 +64,11 @@ func CheckOut(c *gin.Context) {
 			})
 		}
 	}
-	Make(c, req)
+	if !IsSync {
+		ASyncMake(c, req)
+		return
+	}
+	SyncMake(c, req)
 }
 
 func Charge(c *gin.Context) {
@@ -99,7 +104,7 @@ func Charge(c *gin.Context) {
 
 }
 
-func Make(c *gin.Context, req *order.ProcessOrderReq) {
+func ASyncMake(c *gin.Context, req *order.ProcessOrderReq) {
 	id := c.GetUint("userid")
 	PlaceReq := order.PlaceOrderReq{
 		ProductId: make([]uint32, len(req.OrderItems)),
@@ -137,6 +142,24 @@ func Make(c *gin.Context, req *order.ProcessOrderReq) {
 				ErrorMsg: "mq publish:" + err.Error(),
 			},
 		})
+	}
+	c.JSON(http.StatusOK, CheckOutResp{
+		Status: api.Status{
+			Code: api.OK,
+		},
+	})
+}
+
+func SyncMake(c *gin.Context, req *order.ProcessOrderReq) {
+	_, err := OrderClient.ProcessOrder(c, req)
+	if err != nil {
+		c.JSON(http.StatusOK, CheckOutResp{
+			Status: api.Status{
+				Code:     api.ERROR,
+				ErrorMsg: err.Error(),
+			},
+		})
+		return
 	}
 	c.JSON(http.StatusOK, CheckOutResp{
 		Status: api.Status{

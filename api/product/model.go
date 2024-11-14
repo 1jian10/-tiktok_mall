@@ -24,3 +24,13 @@ type CreateResp struct {
 	Status api.Status                  `json:"status"`
 	Data   *product.CreateProductsResp `json:"data"`
 }
+
+type UpdateResp struct {
+	Status api.Status                  `json:"status"`
+	Data   *product.UpdateProductsResp `json:"data"`
+}
+
+type DeleteResp struct {
+	Status api.Status                  `json:"status"`
+	Data   *product.DeleteProductsResp `json:"data"`
+}

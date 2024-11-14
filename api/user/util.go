@@ -21,7 +21,8 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
-	if _, err := UserClient.Register(c, &req); err != nil {
+	resp, err := UserClient.Register(c, &req)
+	if err != nil {
 		c.JSON(http.StatusOK, RegisterResp{
 			Status: api.Status{
 				Code:     api.ERROR,
@@ -30,6 +31,7 @@ func Register(c *gin.Context) {
 		})
 		return
 	}
+	log.Debug("register id:" + fmt.Sprint(resp.UserId))
 	c.JSON(http.StatusOK, RegisterResp{
 		Status: api.Status{
 			Code: api.OK,

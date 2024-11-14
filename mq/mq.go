@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/nsqio/go-nsq"
+	"github.com/zeromicro/go-zero/core/discov"
+	"github.com/zeromicro/go-zero/zrpc"
 	mlog "mall/log"
 	"mall/service/order/proto/order"
 )
@@ -24,6 +26,13 @@ func (h *MessageHandler) HandleMessage(message *nsq.Message) error {
 	return nil
 }
 func main() {
+	conn := zrpc.MustNewClient(zrpc.RpcClientConf{
+		Etcd: discov.EtcdConf{
+			Hosts: []string{"127.0.0.1:4379"},
+			Key:   "order.rpc",
+		},
+	})
+	OrderClient = order.NewOrderServiceClient(conn.Conn())
 	consumer, err := nsq.NewConsumer("order", "process", nsq.NewConfig())
 	if err != nil {
 		panic(err.Error())

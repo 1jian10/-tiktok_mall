@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"github.com/redis/go-redis/v9"
 	"mall/model"
 	"strconv"
@@ -28,6 +29,9 @@ func NewPlaceOrderLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PlaceO
 }
 
 func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrderResp, error) {
+	if l.svcCtx.IsSync {
+		return nil, errors.New("you can do this,it is sync to make order")
+	}
 	db := l.svcCtx.DB
 	rdb := l.svcCtx.RDB
 	log := l.svcCtx.Log

@@ -45,6 +45,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	ctx.DB = db
 	ctx.RDB = rdb
 	ctx.Log = log
+	ctx.IsSync = false
 
 	return ctx
 }

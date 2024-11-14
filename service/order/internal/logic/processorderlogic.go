@@ -2,8 +2,10 @@ package logic
 
 import (
 	"context"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"mall/model"
 	"mall/service/order/internal/svc"
 	"mall/service/order/proto/order"
@@ -32,6 +34,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	rdb := l.svcCtx.RDB
 	log := l.svcCtx.Log
 	var cost float32
+	log.Debug("userid:" + fmt.Sprint(in.UserId))
 	o := model.Order{
 		Currency: in.UserCurrency,
 		Paid:     "False",
@@ -46,18 +49,23 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	}
 	tx := db.Begin()
 	for _, val := range in.OrderItems {
-		res := tx.Model(&model.Product{}).Where("id = ?", val.ProductId).UpdateColumn("Stock", gorm.Expr("Stock - ?", val.Quantity))
-		if res.Error != nil {
-			tx.Rollback()
-			log.Error(res.Error.Error())
-			return nil, res.Error
-		}
 		p := model.Product{}
-		res = tx.Where("id = ?", val.ProductId).Select("Price").Take(&p)
-		if res.Error != nil {
+		err := tx.Where("id = ?", val.ProductId).Clauses(clause.Locking{Strength: "UPDATE"}).Take(&p).Error
+		if err != nil {
+			log.Error(err.Error())
 			tx.Rollback()
-			log.Error("process order get product:" + res.Error.Error())
-			return nil, res.Error
+			return nil, err
+		}
+		if p.Stock < uint(val.Quantity) {
+			log.Info("stock is not enough rollback...")
+			tx.Rollback()
+			return nil, err
+		}
+		err = tx.Model(&p).Where("id = ?", val.ProductId).UpdateColumn("stock", gorm.Expr("stock - ?", val.Quantity)).Error
+		if err != nil {
+			log.Error("process order get product:" + err.Error())
+			tx.Rollback()
+			return nil, err
 		}
 		cost += p.Price * float32(val.Quantity)
 	}
@@ -76,8 +84,9 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 			Quantity:  uint(val.Quantity),
 		}).Error
 		if err != nil {
-			tx.Rollback()
 			log.Error("create order_products:" + err.Error())
+			tx.Rollback()
+			return nil, err
 		}
 	}
 	tx.Commit()

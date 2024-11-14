@@ -16,6 +16,7 @@ type ServiceContext struct {
 	RDB    *redis.Client
 	Log    *mlog.Log
 	Group  singleflight.Group
+	IsSync bool
 }
 
 func NewServiceContext(c config.Config) *ServiceContext {
@@ -45,6 +46,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	ctx.DB = db
 	ctx.RDB = rdb
 	ctx.Log = log
+	ctx.IsSync = false
 
 	return ctx
 }

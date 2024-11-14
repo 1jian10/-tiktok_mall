@@ -35,7 +35,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 	res := db.Where("email = ?", in.Email).First(&u)
 	if !errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		log.Info("register:find repeat record")
-		return nil, res.Error
+		return nil, errors.New("repeat record")
 	}
 	res = db.Create(&model.User{
 		Email:    in.Email,
