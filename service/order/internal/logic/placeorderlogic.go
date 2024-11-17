@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/redis/go-redis/v9"
 	"mall/model"
+	"mall/util"
 	"strconv"
 	"time"
 
@@ -40,16 +41,9 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 
 	for i, pid := range in.ProductId {
 		id := strconv.Itoa(int(pid))
-		for ; ; time.Sleep(time.Millisecond * 10) {
-			ok, err := rdb.SetNX(context.Background(), "product:lock:"+id, "lock", time.Millisecond*100).Result()
-			if err != nil {
-				log.Warn("place order get lock:" + err.Error())
-				continue
-			} else if !ok {
-				log.Info("get lock failed")
-				continue
-			}
-			break
+		if !util.GetLock("product:lock:"+id, rdb, log) {
+			rollback(key, decr, rdb, "product:stock:"+id)
+			return nil, errors.New("time out")
 		}
 		stock, err := rdb.Get(context.Background(), "product:stock:"+id).Result()
 		if err == nil {
@@ -58,7 +52,7 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 			if s-int(in.Quantity[i]) < 0 {
 				log.Info("stock not enough...rollback")
 				rollback(key, decr, rdb, "product:stock:"+id)
-				return nil, err
+				return nil, errors.New("stock not enough")
 			}
 			rdb.DecrBy(context.Background(), "product:stock:"+id, int64(in.Quantity[i]))
 			rdb.Expire(context.Background(), "product:stock:"+id, time.Minute*30)
@@ -78,7 +72,7 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 			rdb.Set(context.Background(), "product:stock:"+id, strconv.Itoa(int(product.ID)), time.Minute*30)
 			log.Info("stock not enough...rollback")
 			rollback(key, decr, rdb, "product:stock:"+id)
-			return nil, err
+			return nil, errors.New("stock not enough")
 		}
 		rdb.Set(context.Background(), "product:stock:"+id, strconv.Itoa(int(product.Stock)-int(in.Quantity[i])), time.Minute*30)
 		key = append(key, "product:stock:"+id)

@@ -7,6 +7,7 @@ import (
 	"mall/model"
 	"mall/service/product/internal/svc"
 	"mall/service/product/proto/product"
+	"mall/util"
 	"math/rand"
 	"strconv"
 	"time"
@@ -43,16 +44,8 @@ func (l *DeleteProductsLogic) ASyncDelete(in *product.DeleteProductsReq) (*produ
 
 	for i, id := range in.ProductId {
 		idstr := strconv.Itoa(int(id))
-		for ; ; time.Sleep(time.Millisecond * 10) {
-			ok, err := rdb.SetNX(context.Background(), "product:lock:"+idstr, "lock", time.Millisecond*100).Result()
-			if err != nil {
-				log.Warn("delete product get lock:" + err.Error())
-				continue
-			} else if !ok {
-				log.Info("get lock failed")
-				continue
-			}
-			break
+		if !util.GetLock("product:lock:"+idstr, rdb, log) {
+			continue
 		}
 		err := rdb.Set(context.Background(), "product:stock:"+idstr, 0, time.Second*(1800+time.Duration(rand.Int()%100)*10)).Err()
 		if err != nil {

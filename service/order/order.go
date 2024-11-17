@@ -10,6 +10,7 @@ import (
 	"mall/service/order/internal/server"
 	"mall/service/order/internal/svc"
 	"mall/service/order/proto/order"
+	"mall/util"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/conf"
@@ -61,12 +62,7 @@ func OrderHandle(ctx *svc.ServiceContext) {
 			log.Info(fmt.Sprintf("%v:%s", res, "out of time"))
 		}
 		for _, v := range res {
-			ok, err := rdb.SetNX(context.Background(), "order:lock"+v, "lock", time.Millisecond*50).Result()
-			if err != nil {
-				log.Error(err.Error())
-				continue
-			} else if !ok {
-				log.Info("delete get lock false")
+			if !util.GetLock("order:lock"+v, rdb, log) {
 				continue
 			}
 			rdb.ZRem(context.Background(), "order:time", v)
