@@ -18,7 +18,9 @@ message PlaceOrderReq{
   uint32 user_id =3;
 }
 
-message PlaceOrderResp{}
+message PlaceOrderResp{
+  uint32 order_id =1;
+}
 
 message Address {
   string street_address = 1;
@@ -40,9 +42,12 @@ message ProcessOrderReq {
   Address address = 3;
   string email = 4;
   repeated OrderItem order_items = 5;
+  uint32 order_id=6;
 }
 
-message ProcessOrderResp {}
+message ProcessOrderResp {
+  uint32 order_id =1;
+}
 
 message Order {
   repeated OrderItem order_items = 1;

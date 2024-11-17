@@ -35,18 +35,24 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	log := l.svcCtx.Log
 	var cost float32
 	log.Debug("userid:" + fmt.Sprint(in.UserId))
-	o := model.Order{
-		Currency: in.UserCurrency,
-		Paid:     "False",
-		UserID:   uint(in.UserId),
-		Address: &model.Address{
-			StreetAddress: in.Address.StreetAddress,
-			City:          in.Address.City,
-			State:         in.Address.State,
-			Country:       in.Address.Country,
-			ZipCode:       in.Address.ZipCode,
-		},
+	o := model.Order{}
+	if in.OrderId != 0 {
+		o.ID = uint(in.OrderId)
+		if err := db.First(&o, in.OrderId).Error; err != nil {
+			return nil, err
+		}
 	}
+	o.Currency = in.UserCurrency
+	o.Paid = "False"
+	o.UserID = uint(in.UserId)
+	o.Address = &model.Address{
+		StreetAddress: in.Address.StreetAddress,
+		City:          in.Address.City,
+		State:         in.Address.State,
+		Country:       in.Address.Country,
+		ZipCode:       in.Address.ZipCode,
+	}
+
 	tx := db.Begin()
 	for _, val := range in.OrderItems {
 		p := model.Product{}
@@ -70,7 +76,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		cost += p.Price * float32(val.Quantity)
 	}
 	o.Cost = cost
-	err := tx.Create(&o).Error
+	err := tx.Save(&o).Error
 	if err != nil {
 		tx.Rollback()
 		log.Error("create order" + err.Error())
@@ -98,5 +104,5 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		log.Error("set order time:" + err.Error())
 	}
 
-	return &order.ProcessOrderResp{}, nil
+	return &order.ProcessOrderResp{OrderId: uint32(o.ID)}, nil
 }

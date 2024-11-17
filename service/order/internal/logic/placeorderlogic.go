@@ -83,12 +83,21 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 			log.Error("place order del lock:" + err.Error())
 		}
 	}
-	return &order.PlaceOrderResp{}, nil
+	tx := db.Begin()
+	o := model.Order{UserID: uint(in.UserId)}
+	if err := tx.Create(&o).Error; err != nil {
+		tx.Rollback()
+		log.Error("place create order:" + err.Error())
+		rollback(key, decr, rdb, "")
+		return nil, err
+	}
+	tx.Commit()
+	return &order.PlaceOrderResp{OrderId: uint32(o.ID)}, nil
 }
 
 func rollback(key []string, stock []uint, rdb *redis.Client, mutex string) {
+	rdb.Del(context.Background(), mutex)
 	for i := range key {
 		rdb.IncrBy(context.Background(), key[i], int64(stock[i]))
 	}
-	rdb.Del(context.Background(), mutex)
 }

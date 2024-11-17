@@ -11,7 +11,8 @@ type ListResp struct {
 }
 
 type CheckOutResp struct {
-	Status api.Status `json:"status"`
+	Status api.Status            `json:"status"`
+	Data   *order.PlaceOrderResp `json:"data"`
 }
 
 type ChargeResp struct {

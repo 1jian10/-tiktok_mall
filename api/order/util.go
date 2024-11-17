@@ -115,7 +115,7 @@ func ASyncMake(c *gin.Context, req *order.ProcessOrderReq) {
 		PlaceReq.ProductId[i] = v.ProductId
 		PlaceReq.Quantity[i] = v.Quantity
 	}
-	_, err := OrderClient.PlaceOrder(c, &PlaceReq)
+	resp, err := OrderClient.PlaceOrder(c, &PlaceReq)
 	if err != nil {
 		c.JSON(http.StatusOK, CheckOutResp{
 			Status: api.Status{
@@ -125,6 +125,7 @@ func ASyncMake(c *gin.Context, req *order.ProcessOrderReq) {
 		})
 		return
 	}
+	req.OrderId = resp.OrderId
 	res, err := json.Marshal(&req)
 	if err != nil {
 		c.JSON(http.StatusOK, CheckOutResp{
@@ -147,6 +148,7 @@ func ASyncMake(c *gin.Context, req *order.ProcessOrderReq) {
 		Status: api.Status{
 			Code: api.OK,
 		},
+		Data: resp,
 	})
 }
 
@@ -166,5 +168,4 @@ func SyncMake(c *gin.Context, req *order.ProcessOrderReq) {
 			Code: api.OK,
 		},
 	})
-
 }

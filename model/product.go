@@ -10,7 +10,6 @@ type Product struct {
 	ImagePath string  `json:"image_path"`
 	FilePath  string  `json:"file_path"`
 	Price     float32 `json:"price"`
-	Deleted   string
 	Stock     uint
 
 	Carts      []Cart       `gorm:"many2many:cart_products" json:"-"`
