@@ -6,12 +6,10 @@ import (
 	"errors"
 	"github.com/redis/go-redis/v9"
 	"mall/model"
-	"math/rand"
-	"strconv"
-	"time"
-
 	"mall/service/product/internal/svc"
 	"mall/service/product/proto/product"
+	"mall/util"
+	"strconv"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
@@ -81,7 +79,7 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 		log.Error("json marshal:" + err.Error())
 		return nil, err
 	}
-	err = rdb.Set(context.Background(), "product:"+strconv.Itoa(int(in.Id)), string(j), time.Second*(1800+time.Duration(rand.Int()%100)*10)).Err()
+	err = rdb.Set(context.Background(), "product:"+strconv.Itoa(int(in.Id)), string(j), util.RandTime()).Err()
 	if err != nil {
 		log.Warn("set product in redis:" + err.Error())
 	}

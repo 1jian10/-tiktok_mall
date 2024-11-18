@@ -29,6 +29,7 @@ func NewDeleteProductsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *De
 	}
 }
 
+// DeleteProducts 暂时不要使用
 func (l *DeleteProductsLogic) DeleteProducts(in *product.DeleteProductsReq) (*product.DeleteProductsResp, error) {
 	if !l.svcCtx.IsSync {
 		return l.ASyncDelete(in)
