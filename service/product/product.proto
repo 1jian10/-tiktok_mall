@@ -60,7 +60,7 @@ message CreateProductsResp{
 
 message UpdateProductsReq{
   repeated Product products=1;
-  uint32 stock =2;
+  repeated uint32 stock =2;
 }
 
 message UpdateProductsResp{

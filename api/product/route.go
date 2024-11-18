@@ -66,7 +66,7 @@ func Search(c *gin.Context) {
 	query := c.Query("query")
 	if query == "" {
 		log.Info("no query in search")
-		util.Response(c, model.BADREQUEST, "")
+		util.Response(c, model.BADREQUEST, "need query")
 		return
 	}
 	req := product.SearchProductsReq{

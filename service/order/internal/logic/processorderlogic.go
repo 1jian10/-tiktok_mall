@@ -33,6 +33,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	db := l.svcCtx.DB
 	rdb := l.svcCtx.RDB
 	log := l.svcCtx.Log
+	IsSync := l.svcCtx.IsSync
 	var cost float32
 	log.Debug("userid:" + fmt.Sprint(in.UserId))
 	o := model.Order{}
@@ -59,17 +60,26 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		err := tx.Where("id = ?", val.ProductId).Clauses(clause.Locking{Strength: "UPDATE"}).Take(&p).Error
 		if err != nil {
 			log.Error(err.Error())
+			if !IsSync {
+				l.notice(in.OrderId, val.ProductId, "search db failed id:"+fmt.Sprint(val.ProductId))
+			}
 			tx.Rollback()
 			return nil, err
 		}
 		if p.Stock < uint(val.Quantity) {
 			log.Info("stock is not enough rollback...")
+			if !IsSync {
+				l.notice(in.OrderId, in.UserId, "stock not enough id:"+fmt.Sprint(val.ProductId))
+			}
 			tx.Rollback()
 			return nil, err
 		}
 		err = tx.Model(&p).Where("id = ?", val.ProductId).UpdateColumn("stock", gorm.Expr("stock - ?", val.Quantity)).Error
 		if err != nil {
 			log.Error("process order get product:" + err.Error())
+			if !IsSync {
+				l.notice(in.OrderId, in.UserId, "update db failed id:"+fmt.Sprint(val.ProductId))
+			}
 			tx.Rollback()
 			return nil, err
 		}
@@ -79,6 +89,9 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	err := tx.Save(&o).Error
 	if err != nil {
 		tx.Rollback()
+		if !IsSync {
+			l.notice(in.OrderId, in.UserId, "save order failed")
+		}
 		log.Error("create order" + err.Error())
 		return nil, err
 	}
@@ -91,6 +104,9 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		}).Error
 		if err != nil {
 			log.Error("create order_products:" + err.Error())
+			if !IsSync {
+				l.notice(in.OrderId, in.UserId, "create join table failed")
+			}
 			tx.Rollback()
 			return nil, err
 		}
@@ -105,4 +121,22 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 	}
 
 	return &order.ProcessOrderResp{OrderId: uint32(o.ID)}, nil
+}
+
+func (l *ProcessOrderLogic) notice(orderId uint32, userId uint32, msg string) {
+	db := l.svcCtx.DB
+	log := l.svcCtx.Log
+	message := model.Message{
+		Message: "some thing wrong in your order because:" + msg,
+		UserID:  uint(userId),
+	}
+	err := db.Create(&message).Error
+	if err != nil {
+		log.Error("write message to user:" + err.Error())
+	}
+	err = db.Delete(&model.Order{}, orderId).Error
+	if err != nil {
+		log.Error("delete order:" + err.Error())
+	}
+
 }

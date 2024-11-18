@@ -60,12 +60,14 @@ func Logout(c *gin.Context) {
 
 func Info(c *gin.Context) {
 	id := c.GetUint("userid")
+	token := c.GetHeader("authorization")
 	log.Debug("userid:" + fmt.Sprint(id))
 	resp, err := UserClient.Info(c, &user.InfoReq{UserId: uint32(id)})
 	if err != nil {
 		util.Response(c, model.ERROR, err.Error())
 		return
 	}
+	auth.DeleteToken(token)
 	util.Response(c, model.OK, "", resp)
 }
 

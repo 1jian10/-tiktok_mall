@@ -2,17 +2,12 @@ package logic
 
 import (
 	"context"
-	"fmt"
-	"gorm.io/gorm/clause"
+	"github.com/zeromicro/go-zero/core/logx"
 	"mall/model"
 	"mall/service/product/internal/svc"
 	"mall/service/product/proto/product"
 	"mall/util"
-	"math/rand"
 	"strconv"
-	"time"
-
-	"github.com/zeromicro/go-zero/core/logx"
 )
 
 type DeleteProductsLogic struct {
@@ -45,34 +40,17 @@ func (l *DeleteProductsLogic) ASyncDelete(in *product.DeleteProductsReq) (*produ
 
 	for i, id := range in.ProductId {
 		idstr := strconv.Itoa(int(id))
-		if !util.GetLock("product:lock:"+idstr, rdb, log) {
-			continue
-		}
-		err := rdb.Set(context.Background(), "product:stock:"+idstr, 0, time.Second*(1800+time.Duration(rand.Int()%100)*10)).Err()
+		err := rdb.Set(context.Background(), "product:stock:"+idstr, 0, util.RandTime()).Err()
 		if err != nil {
-			log.Error("delete product form redis:" + err.Error())
+			log.Error("delete product from redis:" + err.Error())
 			continue
 		}
 		p := model.Product{}
-		tx := db.Begin()
-		err = tx.Where("id = ?", id).Clauses(clause.Locking{Strength: "UPDATE"}).First(&p).Error
-		if err != nil {
-			log.Error("delete product from mysql:" + err.Error())
-			tx.Rollback()
-			continue
-		}
-		err = tx.Take(&p).UpdateColumn("stock", 0).Error
-		if err != nil {
+		if err := db.Delete(p, in.ProductId).Error; err != nil {
 			log.Error("delete product from mysql:" + err.Error())
 			continue
 		}
-		tx.Commit()
-		log.Debug("stock:" + fmt.Sprint(p.Stock))
 		res[i] = id
-		err = rdb.Del(context.Background(), "product:lock:"+idstr, "lock").Err()
-		if err != nil {
-			log.Warn("del lock failed:" + err.Error())
-		}
 	}
 	return &product.DeleteProductsResp{ProductId: res}, nil
 }
@@ -84,21 +62,10 @@ func (l *DeleteProductsLogic) SyncDelete(in *product.DeleteProductsReq) (*produc
 
 	for i, id := range in.ProductId {
 		p := model.Product{}
-		tx := db.Begin()
-		err := tx.Where("id = ?", id).Clauses(clause.Locking{Strength: "UPDATE"}).Take(&p).Error
-		if err != nil {
-			log.Error("mysql get lock:" + err.Error())
-			tx.Rollback()
+		if err := db.Delete(p, id).Error; err != nil {
+			log.Error("delete product from mysql:" + err.Error())
 			continue
 		}
-		err = tx.Take(&p).UpdateColumn("stock", 0).Error
-		if err != nil {
-			log.Error("mysql update stock:" + err.Error())
-			tx.Rollback()
-			continue
-		}
-		log.Debug("stock:" + fmt.Sprint(p.Stock))
-		tx.Commit()
 		res[i] = id
 	}
 	return &product.DeleteProductsResp{ProductId: res}, nil

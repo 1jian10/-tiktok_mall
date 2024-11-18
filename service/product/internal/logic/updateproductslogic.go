@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"gorm.io/gorm/clause"
 	"mall/model"
 	"strconv"
@@ -28,6 +29,9 @@ func NewUpdateProductsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Up
 }
 
 func (l *UpdateProductsLogic) UpdateProducts(in *product.UpdateProductsReq) (*product.UpdateProductsResp, error) {
+	if !l.svcCtx.IsSync && len(in.Stock) != 0 {
+		return nil, errors.New("ASync make order can not change Stock")
+	}
 	db := l.svcCtx.DB
 	rdb := l.svcCtx.RDB
 	log := l.svcCtx.Log
@@ -45,11 +49,27 @@ func (l *UpdateProductsLogic) UpdateProducts(in *product.UpdateProductsReq) (*pr
 		p.ImagePath = v.ImagePath
 		p.Price = v.Price
 		p.Name = v.Name
-		p.Categories = make([]model.Categories, len(v.Categories))
-		for j, cate := range v.Categories {
-			p.Categories[j].Name = cate
+		p.Stock += uint(in.Stock[i])
+		cate := make([]model.Categories, len(v.Categories))
+		for j, name := range v.Categories {
+			cate[j].Name = name
+			err = tx.Where("name = ?", name).FirstOrCreate(&cate[j]).Error
+			if err != nil {
+				break
+			}
+		}
+		if err != nil {
+			log.Warn("update get category:" + err.Error())
+			tx.Rollback()
+			continue
 		}
 		err = tx.Save(&p).Error
+		if err != nil {
+			log.Warn("save product:" + err.Error())
+			tx.Rollback()
+			continue
+		}
+		err = tx.Model(&p).Association("Categories").Replace(cate)
 		if err != nil {
 			log.Error("save product:" + err.Error())
 			tx.Rollback()

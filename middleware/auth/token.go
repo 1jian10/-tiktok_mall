@@ -21,7 +21,7 @@ func init() {
 		Addr: "127.0.0.1:6379",
 		DB:   0,
 	})
-	log = mlog.NewLog("Auth")
+	log = mlog.NewLog("Auth", mlog.Info)
 	if err := RDB.Ping(context.Background()).Err(); err != nil {
 		log.Warn("redis ping fail:" + err.Error())
 		RDB = nil
