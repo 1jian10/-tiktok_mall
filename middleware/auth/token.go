@@ -7,8 +7,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
-	"mall/api"
 	mlog "mall/log"
+	"mall/model"
 	"net/http"
 	"strconv"
 	"time"
@@ -96,8 +96,8 @@ func (t Token) withRedis() {
 	if err != nil {
 		log.Info("get token fail:" + err.Error())
 		c.JSON(http.StatusOK, AuthResp{
-			Status: api.Status{
-				Code:     api.FORBIDDEN,
+			Status: model.Status{
+				Code:     model.FORBIDDEN,
 				ErrorMsg: "you need login to use it",
 			},
 		})
@@ -111,8 +111,8 @@ func (t Token) withRedis() {
 	if err != nil {
 		log.Error(err.Error())
 		c.JSON(http.StatusOK, AuthResp{
-			Status: api.Status{
-				Code:     api.ERROR,
+			Status: model.Status{
+				Code:     model.ERROR,
 				ErrorMsg: "json unmarshal failed",
 			},
 		})
@@ -133,8 +133,8 @@ func (t Token) direct() {
 	if err != nil {
 		log.Info("direct parse token fail:" + err.Error())
 		c.JSON(http.StatusOK, AuthResp{
-			Status: api.Status{
-				Code:     api.FORBIDDEN,
+			Status: model.Status{
+				Code:     model.FORBIDDEN,
 				ErrorMsg: "parse token failed",
 			},
 		})
@@ -144,8 +144,8 @@ func (t Token) direct() {
 	if !token.Valid {
 		log.Info("token is invalid")
 		c.JSON(http.StatusOK, AuthResp{
-			Status: api.Status{
-				Code:     api.FORBIDDEN,
+			Status: model.Status{
+				Code:     model.FORBIDDEN,
 				ErrorMsg: "token is invalid",
 			},
 		})
