@@ -47,3 +47,8 @@ func (s *UserServiceServer) Info(ctx context.Context, in *user.InfoReq) (*user.I
 	l := logic.NewInfoLogic(ctx, s.svcCtx)
 	return l.Info(in)
 }
+
+func (s *UserServiceServer) GetMessage(ctx context.Context, in *user.GetMessageReq) (*user.GetMessageResp, error) {
+	l := logic.NewGetMessageLogic(ctx, s.svcCtx)
+	return l.GetMessage(in)
+}

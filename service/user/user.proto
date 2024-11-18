@@ -10,6 +10,7 @@ service UserService {
   rpc Delete(DeleteReq) returns (DeleteResp){}
   rpc Update(UpdateReq) returns (UpdateResp){}
   rpc Info(InfoReq) returns (InfoResp){}
+  rpc GetMessage(GetMessageReq) returns (GetMessageResp){}
 }
 
 message RegisterReq {
@@ -53,5 +54,14 @@ message InfoReq{
 
 message InfoResp{
   string email=1;
+}
+
+message GetMessageReq{
+  uint32 user_id=1;
+}
+
+message GetMessageResp {
+  repeated uint32 message_id=1;
+  repeated string message=2;
 }
 

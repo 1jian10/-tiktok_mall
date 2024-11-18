@@ -71,6 +71,17 @@ func Info(c *gin.Context) {
 	util.Response(c, model.OK, "", resp)
 }
 
+func Message(c *gin.Context) {
+	id := c.GetUint("userid")
+
+	resp, err := UserClient.GetMessage(c, &user.GetMessageReq{UserId: uint32(id)})
+	if err != nil {
+		util.Response(c, model.ERROR, err.Error())
+		return
+	}
+	util.Response(c, model.OK, "", resp)
+}
+
 func Delete(c *gin.Context) {
 	id := c.GetUint("userid")
 

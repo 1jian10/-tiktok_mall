@@ -27,6 +27,7 @@ func Init(engine *gin.Engine) {
 		group.POST("/Login", Login)
 		group.GET("/Logout", Logout)
 		group.GET("/Info", auth.ParseToken, Info)
+		group.GET("/Message", auth.ParseToken, Message)
 		group.DELETE("/Delete", auth.ParseToken, Delete)
 		group.PUT("/Update", auth.ParseToken, Update)
 	}

@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_Register_FullMethodName = "/user.UserService/Register"
-	UserService_Login_FullMethodName    = "/user.UserService/Login"
-	UserService_Delete_FullMethodName   = "/user.UserService/Delete"
-	UserService_Update_FullMethodName   = "/user.UserService/Update"
-	UserService_Info_FullMethodName     = "/user.UserService/Info"
+	UserService_Register_FullMethodName   = "/user.UserService/Register"
+	UserService_Login_FullMethodName      = "/user.UserService/Login"
+	UserService_Delete_FullMethodName     = "/user.UserService/Delete"
+	UserService_Update_FullMethodName     = "/user.UserService/Update"
+	UserService_Info_FullMethodName       = "/user.UserService/Info"
+	UserService_GetMessage_FullMethodName = "/user.UserService/GetMessage"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -35,6 +36,7 @@ type UserServiceClient interface {
 	Delete(ctx context.Context, in *DeleteReq, opts ...grpc.CallOption) (*DeleteResp, error)
 	Update(ctx context.Context, in *UpdateReq, opts ...grpc.CallOption) (*UpdateResp, error)
 	Info(ctx context.Context, in *InfoReq, opts ...grpc.CallOption) (*InfoResp, error)
+	GetMessage(ctx context.Context, in *GetMessageReq, opts ...grpc.CallOption) (*GetMessageResp, error)
 }
 
 type userServiceClient struct {
@@ -95,6 +97,16 @@ func (c *userServiceClient) Info(ctx context.Context, in *InfoReq, opts ...grpc.
 	return out, nil
 }
 
+func (c *userServiceClient) GetMessage(ctx context.Context, in *GetMessageReq, opts ...grpc.CallOption) (*GetMessageResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMessageResp)
+	err := c.cc.Invoke(ctx, UserService_GetMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -104,6 +116,7 @@ type UserServiceServer interface {
 	Delete(context.Context, *DeleteReq) (*DeleteResp, error)
 	Update(context.Context, *UpdateReq) (*UpdateResp, error)
 	Info(context.Context, *InfoReq) (*InfoResp, error)
+	GetMessage(context.Context, *GetMessageReq) (*GetMessageResp, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -128,6 +141,9 @@ func (UnimplementedUserServiceServer) Update(context.Context, *UpdateReq) (*Upda
 }
 func (UnimplementedUserServiceServer) Info(context.Context, *InfoReq) (*InfoResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Info not implemented")
+}
+func (UnimplementedUserServiceServer) GetMessage(context.Context, *GetMessageReq) (*GetMessageResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMessage not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -240,6 +256,24 @@ func _UserService_Info_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMessageReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetMessage(ctx, req.(*GetMessageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -266,6 +300,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Info",
 			Handler:    _UserService_Info_Handler,
+		},
+		{
+			MethodName: "GetMessage",
+			Handler:    _UserService_GetMessage_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

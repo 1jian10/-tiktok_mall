@@ -14,16 +14,18 @@ import (
 )
 
 type (
-	DeleteReq    = user.DeleteReq
-	DeleteResp   = user.DeleteResp
-	InfoReq      = user.InfoReq
-	InfoResp     = user.InfoResp
-	LoginReq     = user.LoginReq
-	LoginResp    = user.LoginResp
-	RegisterReq  = user.RegisterReq
-	RegisterResp = user.RegisterResp
-	UpdateReq    = user.UpdateReq
-	UpdateResp   = user.UpdateResp
+	DeleteReq      = user.DeleteReq
+	DeleteResp     = user.DeleteResp
+	GetMessageReq  = user.GetMessageReq
+	GetMessageResp = user.GetMessageResp
+	InfoReq        = user.InfoReq
+	InfoResp       = user.InfoResp
+	LoginReq       = user.LoginReq
+	LoginResp      = user.LoginResp
+	RegisterReq    = user.RegisterReq
+	RegisterResp   = user.RegisterResp
+	UpdateReq      = user.UpdateReq
+	UpdateResp     = user.UpdateResp
 
 	UserService interface {
 		Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterResp, error)
@@ -31,6 +33,7 @@ type (
 		Delete(ctx context.Context, in *DeleteReq, opts ...grpc.CallOption) (*DeleteResp, error)
 		Update(ctx context.Context, in *UpdateReq, opts ...grpc.CallOption) (*UpdateResp, error)
 		Info(ctx context.Context, in *InfoReq, opts ...grpc.CallOption) (*InfoResp, error)
+		GetMessage(ctx context.Context, in *GetMessageReq, opts ...grpc.CallOption) (*GetMessageResp, error)
 	}
 
 	defaultUserService struct {
@@ -67,4 +70,9 @@ func (m *defaultUserService) Update(ctx context.Context, in *UpdateReq, opts ...
 func (m *defaultUserService) Info(ctx context.Context, in *InfoReq, opts ...grpc.CallOption) (*InfoResp, error) {
 	client := user.NewUserServiceClient(m.cli.Conn())
 	return client.Info(ctx, in, opts...)
+}
+
+func (m *defaultUserService) GetMessage(ctx context.Context, in *GetMessageReq, opts ...grpc.CallOption) (*GetMessageResp, error) {
+	client := user.NewUserServiceClient(m.cli.Conn())
+	return client.GetMessage(ctx, in, opts...)
 }
