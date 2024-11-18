@@ -23,7 +23,7 @@ func Init(engine *gin.Engine) {
 	log = mlog.NewLog("CartAPI")
 	group := engine.Group("/Cart", auth.ParseToken)
 	{
-		group.POST("/Add", Add)
+		group.PUT("/Add", Add)
 		group.GET("/Get", Get)
 		group.PUT("/Empty", Empty)
 	}

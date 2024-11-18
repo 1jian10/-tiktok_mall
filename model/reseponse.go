@@ -1,8 +1,13 @@
-package api
+package model
 
 type Status struct {
 	Code     uint   `json:"code"`
 	ErrorMsg string `json:"error_msg"`
+}
+
+type Response struct {
+	Status Status      `json:"status"`
+	Data   interface{} `json:"data"`
 }
 
 const (

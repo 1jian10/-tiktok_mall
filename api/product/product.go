@@ -24,9 +24,9 @@ func Init(engine *gin.Engine) {
 	group := engine.Group("/Product", auth.ParseToken)
 	{
 		group.PUT("/Update", Update)
-		group.POST("/Get", Get)
-		group.POST("/List", List)
-		group.POST("/Search", Search)
+		group.GET("/Get", Get)
+		group.GET("/List", List)
+		group.GET("/Search", Search)
 		group.POST("/Create", Create)
 		group.DELETE("/Delete", Delete)
 	}

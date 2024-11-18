@@ -4,30 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"mall/api"
+	"mall/model"
 	"mall/service/cart/proto/cart"
 	"mall/service/order/proto/order"
-	"net/http"
+	"mall/util"
 )
 
 func List(c *gin.Context) {
 	id := c.GetUint("userid")
 	resp, err := OrderClient.ListOrder(c, &order.ListOrderReq{UserId: uint32(id)})
 	if err != nil {
-		c.JSON(http.StatusOK, ListResp{
-			Status: api.Status{
-				Code:     api.ERROR,
-				ErrorMsg: err.Error(),
-			},
-		})
+		util.Response(c, model.ERROR, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, ListResp{
-		Status: api.Status{
-			Code: api.OK,
-		},
-		Data: resp,
-	})
+	util.Response(c, model.ERROR, "", resp)
 }
 
 func CheckOut(c *gin.Context) {
@@ -35,12 +25,7 @@ func CheckOut(c *gin.Context) {
 	id := c.GetUint("userid")
 	if err := c.ShouldBind(&req); err != nil {
 		log.Error("can not bind req:" + fmt.Sprint(&req))
-		c.JSON(http.StatusOK, CheckOutResp{
-			Status: api.Status{
-				Code:     api.BADREQUEST,
-				ErrorMsg: "json can not bind",
-			},
-		})
+		util.Response(c, model.BADREQUEST, "json can not bind")
 		return
 	}
 	req.UserId = uint32(id)
@@ -48,12 +33,7 @@ func CheckOut(c *gin.Context) {
 	if len(req.OrderItems) == 0 {
 		GetResp, err := CartClient.GetCart(c, &cart.GetCartReq{UserId: uint32(id)})
 		if err != nil {
-			c.JSON(http.StatusOK, CheckOutResp{
-				Status: api.Status{
-					Code:     api.ERROR,
-					ErrorMsg: err.Error(),
-				},
-			})
+			util.Response(c, model.ERROR, "")
 			return
 		}
 		_, _ = CartClient.EmptyCart(c, &cart.EmptyCartReq{UserId: uint32(id)})
@@ -76,31 +56,17 @@ func Charge(c *gin.Context) {
 	req := order.MarkOrderPaidReq{}
 	if err := c.ShouldBind(&req); err != nil {
 		log.Error("can not bind req:" + fmt.Sprint(&req))
-		c.JSON(http.StatusOK, ChargeResp{
-			Status: api.Status{
-				Code:     api.BADREQUEST,
-				ErrorMsg: "json can not bind",
-			},
-		})
+		util.Response(c, model.BADREQUEST, "json can not bind")
 		return
 	}
 	req.UserId = uint32(id)
 
 	_, err := OrderClient.MarkOrderPaid(c, &req)
 	if err != nil {
-		c.JSON(http.StatusOK, ChargeResp{
-			Status: api.Status{
-				Code:     api.ERROR,
-				ErrorMsg: err.Error(),
-			},
-		})
+		util.Response(c, model.ERROR, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, ChargeResp{
-		Status: api.Status{
-			Code: api.OK,
-		},
-	})
+	util.Response(c, model.OK, "")
 
 }
 
@@ -117,55 +83,26 @@ func ASyncMake(c *gin.Context, req *order.ProcessOrderReq) {
 	}
 	resp, err := OrderClient.PlaceOrder(c, &PlaceReq)
 	if err != nil {
-		c.JSON(http.StatusOK, CheckOutResp{
-			Status: api.Status{
-				Code:     api.ERROR,
-				ErrorMsg: err.Error(),
-			},
-		})
+		util.Response(c, model.ERROR, err.Error())
 		return
 	}
 	req.OrderId = resp.OrderId
 	res, err := json.Marshal(&req)
 	if err != nil {
-		c.JSON(http.StatusOK, CheckOutResp{
-			Status: api.Status{
-				Code:     api.ERROR,
-				ErrorMsg: "json marshal:" + err.Error(),
-			},
-		})
+		util.Response(c, model.ERROR, "json marshal:"+err.Error())
 	}
 	err = producer.Publish("order", res)
 	if err != nil {
-		c.JSON(http.StatusOK, CheckOutResp{
-			Status: api.Status{
-				Code:     api.ERROR,
-				ErrorMsg: "mq publish:" + err.Error(),
-			},
-		})
+		util.Response(c, model.ERROR, "mq publish:"+err.Error())
 	}
-	c.JSON(http.StatusOK, CheckOutResp{
-		Status: api.Status{
-			Code: api.OK,
-		},
-		Data: resp,
-	})
+	util.Response(c, model.OK, "", resp)
 }
 
 func SyncMake(c *gin.Context, req *order.ProcessOrderReq) {
-	_, err := OrderClient.ProcessOrder(c, req)
+	resp, err := OrderClient.ProcessOrder(c, req)
 	if err != nil {
-		c.JSON(http.StatusOK, CheckOutResp{
-			Status: api.Status{
-				Code:     api.ERROR,
-				ErrorMsg: err.Error(),
-			},
-		})
+		util.Response(c, model.ERROR, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, CheckOutResp{
-		Status: api.Status{
-			Code: api.OK,
-		},
-	})
+	util.Response(c, model.OK, "", resp)
 }

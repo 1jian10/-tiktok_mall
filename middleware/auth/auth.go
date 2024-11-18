@@ -3,7 +3,7 @@ package auth
 import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"mall/api"
+	"mall/model"
 )
 
 type Token struct {
@@ -17,5 +17,5 @@ type MyClaims struct {
 }
 
 type AuthResp struct {
-	Status api.Status `json:"status"`
+	Status model.Status `json:"status"`
 }

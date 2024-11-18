@@ -43,7 +43,7 @@ func Init(engine *gin.Engine) {
 	group := engine.Group("/Order", auth.ParseToken)
 	{
 		group.POST("/CheckOut", CheckOut)
-		group.POST("/Charge", Charge)
+		group.PUT("/Charge", Charge)
 		group.GET("/List", List)
 	}
 }
