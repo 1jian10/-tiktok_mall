@@ -9,7 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	mlog "mall/log"
 	"mall/model"
-	"net/http"
+	"mall/util"
 	"strconv"
 	"time"
 )
@@ -33,9 +33,11 @@ var RDB *redis.Client
 
 func GetToken(c *gin.Context) (string, error) {
 	id := c.GetUint("userid")
-	res, err := RDB.Get(c, "token:id:"+strconv.FormatUint(uint64(id), 10)).Result()
-	if err == nil {
-		return res, nil
+	if RDB != nil {
+		res, err := RDB.Get(c, "token:id:"+strconv.FormatUint(uint64(id), 10)).Result()
+		if err == nil {
+			return res, nil
+		}
 	}
 
 	claims := MyClaims{
@@ -51,8 +53,10 @@ func GetToken(c *gin.Context) (string, error) {
 		if err != nil {
 			return str, err
 		}
-		RDB.Set(c, "token:"+str, string(b), time.Hour*24*7)
-		RDB.Set(c, "token:id:"+strconv.FormatUint(uint64(id), 10), str, time.Hour*24*7)
+		if RDB != nil {
+			RDB.Set(c, "token:"+str, string(b), time.Hour*24*7)
+			RDB.Set(c, "token:id:"+strconv.FormatUint(uint64(id), 10), str, time.Hour*24*7)
+		}
 	}
 	return str, err
 }
@@ -95,12 +99,7 @@ func (t Token) withRedis() {
 	res, err := RDB.Get(c, "token:"+t.Token).Result()
 	if err != nil {
 		log.Info("get token fail:" + err.Error())
-		c.JSON(http.StatusOK, AuthResp{
-			Status: model.Status{
-				Code:     model.FORBIDDEN,
-				ErrorMsg: "you need login to use it",
-			},
-		})
+		util.Response(c, model.FORBIDDEN, "you can not to use it")
 		c.Abort()
 		return
 	}
@@ -110,12 +109,7 @@ func (t Token) withRedis() {
 	err = json.Unmarshal([]byte(res), &m)
 	if err != nil {
 		log.Error(err.Error())
-		c.JSON(http.StatusOK, AuthResp{
-			Status: model.Status{
-				Code:     model.ERROR,
-				ErrorMsg: "json unmarshal failed",
-			},
-		})
+		util.Response(c, model.ERROR, "json unmarshal failed")
 		c.Abort()
 		return
 	}
@@ -132,23 +126,13 @@ func (t Token) direct() {
 	})
 	if err != nil {
 		log.Info("direct parse token fail:" + err.Error())
-		c.JSON(http.StatusOK, AuthResp{
-			Status: model.Status{
-				Code:     model.FORBIDDEN,
-				ErrorMsg: "parse token failed",
-			},
-		})
+		util.Response(c, model.FORBIDDEN, "parse token fail")
 		c.Abort()
 		return
 	}
 	if !token.Valid {
 		log.Info("token is invalid")
-		c.JSON(http.StatusOK, AuthResp{
-			Status: model.Status{
-				Code:     model.FORBIDDEN,
-				ErrorMsg: "token is invalid",
-			},
-		})
+		util.Response(c, model.FORBIDDEN, "token is invalid")
 		c.Abort()
 		return
 	}

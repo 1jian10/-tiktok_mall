@@ -29,7 +29,7 @@ func (l *GetMessageLogic) GetMessage(in *user.GetMessageReq) (*user.GetMessageRe
 	log := l.svcCtx.Log
 
 	u := model.User{}
-	err := db.Preload("Messages").Take(&u, in.UserId).Error
+	err := db.Preload("Messages").Find(&u, in.UserId).Error
 	if err != nil {
 		log.Error("take message:" + err.Error())
 		return nil, err
