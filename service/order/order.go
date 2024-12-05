@@ -23,7 +23,6 @@ import (
 var configFile = flag.String("f", "etc/order.yaml", "the config file")
 
 func main() {
-	flag.Parse()
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
@@ -62,7 +61,8 @@ func OrderHandle(ctx *svc.ServiceContext) {
 			log.Info(fmt.Sprintf("%v:%s", res, "out of time"))
 		}
 		for _, v := range res {
-			if !util.GetLock("order:lock"+v, rdb, log) {
+			uid, ok := util.GetLock("order:lock"+v, rdb, log)
+			if !ok {
 				continue
 			}
 			rdb.ZRem(context.Background(), "order:time", v)
@@ -71,10 +71,7 @@ func OrderHandle(ctx *svc.ServiceContext) {
 			if err != nil {
 				log.Error(err.Error())
 			}
-			err = rdb.Del(context.Background(), "order:lock"+v).Err()
-			if err != nil {
-				log.Error(err.Error())
-			}
+			util.UnLock("order:lock"+v, rdb, uid)
 		}
 
 		time.Sleep(time.Millisecond * 50)

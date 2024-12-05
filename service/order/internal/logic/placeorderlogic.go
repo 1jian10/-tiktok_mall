@@ -76,15 +76,12 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 			return nil, errors.New("stock not enough")
 		}
 	}
-	tx := db.Begin()
 	o := model.Order{UserID: uint(in.UserId)}
-	if err := tx.Create(&o).Error; err != nil {
-		tx.Rollback()
+	if err := db.Create(&o).Error; err != nil {
 		log.Error("place create order:" + err.Error())
 		rollback(key, decr, rdb)
 		return nil, err
 	}
-	tx.Commit()
 	return &order.PlaceOrderResp{OrderId: uint32(o.ID)}, nil
 }
 
