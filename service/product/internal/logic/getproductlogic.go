@@ -50,6 +50,7 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 		log.Warn("get product form redis:" + err.Error())
 	}
 
+	//防止缓存击穿
 	ans, err, _ := group.Do("id:"+idstr, func() (interface{}, error) {
 		p := model.Product{}
 		err := db.Preload("Categories").Where("id = ?", in.Id).Take(&p).Error
@@ -74,6 +75,7 @@ func (l *GetProductLogic) GetProduct(in *product.GetProductReq) (*product.GetPro
 	for i, v := range p.Categories {
 		res.Product.Categories[i] = v.Name
 	}
+
 	j, err := json.Marshal(res.Product)
 	if err != nil {
 		log.Error("json marshal:" + err.Error())

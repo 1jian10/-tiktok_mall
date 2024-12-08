@@ -45,6 +45,7 @@ func (l *DeleteProductsLogic) ASyncDelete(in *product.DeleteProductsReq) (*produ
 			log.Error("delete product from redis:" + err.Error())
 			continue
 		}
+
 		p := model.Product{}
 		if err := db.Delete(p, in.ProductId).Error; err != nil {
 			log.Error("delete product from mysql:" + err.Error())

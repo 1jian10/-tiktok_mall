@@ -10,9 +10,9 @@ type Order struct {
 	Paid     string
 	Cost     float32
 
-	UserID    uint      `gorm:"foreignKey:UserID"`
+	UserID    uint      `gorm:"foreignKey:UserID;index"`
 	Products  []Product `gorm:"many2many:order_products"`
-	AddressID uint      `gorm:"foreignKey:AddressID"`
+	AddressID uint      `gorm:"foreignKey:AddressID;index"`
 	Address   *Address
 }
 

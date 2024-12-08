@@ -6,6 +6,7 @@ import (
 
 type Product struct {
 	gorm.Model
+	// 模糊查询 name like %abc% 索引失效
 	Name      string  `gorm:"unique;index" json:"name"`
 	ImagePath string  `json:"image_path"`
 	FilePath  string  `json:"file_path"`

@@ -7,7 +7,7 @@ import (
 type Cart struct {
 	gorm.Model
 
-	UserID   uint      `gorm:"foreignKey:UserID"`
+	UserID   uint      `gorm:"foreignKey:UserID;index"`
 	Products []Product `gorm:"many2many:cart_products"`
 }
 

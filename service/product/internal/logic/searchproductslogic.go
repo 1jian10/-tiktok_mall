@@ -39,6 +39,7 @@ func (l *SearchProductsLogic) SearchWithName(in *product.SearchProductsReq) (*pr
 	p := make([]model.Product, 0)
 
 	log.Info("search product name:" + in.Query)
+	//此处索引失效
 	err := db.Preload("Categories").Where("name LIKE ?", "%"+in.Query+"%").Limit(30).Find(&p).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Info("not found name like:" + in.Query)
@@ -60,6 +61,7 @@ func (l *SearchProductsLogic) SearchWithName(in *product.SearchProductsReq) (*pr
 			ImagePath:  v.ImagePath,
 			Categories: make([]string, len(v.Categories)),
 		}
+
 		for j, c := range v.Categories {
 			res.Results[i].Categories[j] = c.Name
 		}

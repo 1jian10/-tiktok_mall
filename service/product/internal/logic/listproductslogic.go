@@ -35,10 +35,12 @@ func (l *ListProductsLogic) ListProducts(in *product.ListProductsReq) (*product.
 		log.Error("list products:" + err.Error())
 		return nil, err
 	}
-	log.Debug("ListSearch:" + fmt.Sprint(p))
+
+	//log.Debug("ListSearch:" + fmt.Sprint(p))
 	res := &product.ListProductsResp{
 		Products: make([]*product.Product, len(p)),
 	}
+
 	for i, v := range p {
 		res.Products[i] = &product.Product{
 			Id:         uint32(v.ID),
@@ -48,6 +50,7 @@ func (l *ListProductsLogic) ListProducts(in *product.ListProductsReq) (*product.
 			ImagePath:  v.ImagePath,
 			Categories: make([]string, len(v.Categories)),
 		}
+
 		for j, c := range v.Categories {
 			res.Products[i].Categories[j] = c.Name
 		}

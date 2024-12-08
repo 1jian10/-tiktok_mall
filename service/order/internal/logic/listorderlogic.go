@@ -35,6 +35,7 @@ func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp
 		log.Error("take User order:" + err.Error())
 		return nil, err
 	}
+
 	res := &order.ListOrderResp{
 		Orders: make([]*order.Order, len(u.Orders)),
 	}
@@ -52,6 +53,7 @@ func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp
 			},
 			Email: u.Email,
 		}
+
 		for j, p := range o.Products {
 			op := model.OrderProducts{}
 			err := db.Where("order_id = ?", o.ID).Where("product_id = ?", p.ID).Take(&op).Error
@@ -59,6 +61,7 @@ func (l *ListOrderLogic) ListOrder(in *order.ListOrderReq) (*order.ListOrderResp
 				log.Error("search order:" + err.Error())
 				return nil, err
 			}
+
 			res.Orders[i].OrderItems[j] = &order.OrderItem{
 				ProductId: uint32(op.ProductID),
 				Quantity:  int32(op.Quantity),

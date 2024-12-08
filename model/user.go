@@ -18,5 +18,5 @@ type Message struct {
 	gorm.Model
 	Message string `gorm:"message"`
 
-	UserID uint `gorm:"primaryKey"`
+	UserID uint `gorm:"primaryKey;index"`
 }

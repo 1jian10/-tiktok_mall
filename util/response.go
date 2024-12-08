@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// Response 封装响应，统一http返回格式
 func Response(c *gin.Context, code int, msg string, data ...interface{}) {
 	response := model.Response{
 		Status: model.Status{

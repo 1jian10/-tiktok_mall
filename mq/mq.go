@@ -1,3 +1,4 @@
+// 处理消息队列中的消息
 package main
 
 import (
@@ -15,6 +16,7 @@ type MessageHandler struct{}
 var log *mlog.Log
 var OrderClient order.OrderServiceClient
 
+// HandleMessage 处理消息队列中异步下单的消息
 func (h *MessageHandler) HandleMessage(message *nsq.Message) error {
 	req := order.ProcessOrderReq{}
 	err := json.Unmarshal(message.Body, &req)

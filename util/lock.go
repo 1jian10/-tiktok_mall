@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// GetLock 获取分布式锁，超时返回false，获取到时返回uuid，防止其他客户端释放锁
 func GetLock(key string, rdb *redis.Client, log *mlog.Log) (string, bool) {
 	id := uuid.New().String()
 	ctx := context.Background()
@@ -25,6 +26,7 @@ func GetLock(key string, rdb *redis.Client, log *mlog.Log) (string, bool) {
 	return "", false
 }
 
+// UnLock 删除分布式锁，传入uuid防止误删其他客户端的锁，存在并发问题，需使用lua优化
 func UnLock(key string, rdb *redis.Client, id string) {
 	ctx := context.Background()
 	if rdb.Get(ctx, key).Name() == id {

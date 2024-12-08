@@ -34,10 +34,12 @@ func (l *GetMessageLogic) GetMessage(in *user.GetMessageReq) (*user.GetMessageRe
 		log.Error("take message:" + err.Error())
 		return nil, err
 	}
+
 	res := &user.GetMessageResp{
 		MessageId: make([]uint32, len(u.Messages)),
 		Message:   make([]string, len(u.Messages)),
 	}
+
 	for i, msg := range u.Messages {
 		res.MessageId[i] = uint32(msg.ID)
 		res.Message[i] = msg.Message

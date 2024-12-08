@@ -1,3 +1,4 @@
+// 初始化数据库表结构
 package main
 
 import (

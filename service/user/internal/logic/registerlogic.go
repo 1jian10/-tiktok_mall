@@ -37,6 +37,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 		log.Info("register:find repeat record")
 		return nil, errors.New("repeat record")
 	}
+
 	res = db.Create(&model.User{
 		Email:    in.Email,
 		Password: in.Password,
@@ -45,6 +46,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 		log.Error(res.Error.Error())
 		return nil, res.Error
 	}
+
 	db.Where("email = ?", in.Email).First(&u)
 	if err := db.Create(&model.Cart{UserID: u.ID}).Error; err != nil {
 		log.Error(err.Error())

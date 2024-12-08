@@ -36,6 +36,7 @@ func (l *DeleteLogic) Delete(in *user.DeleteReq) (*user.DeleteResp, error) {
 		tx.Rollback()
 		return nil, err
 	}
+
 	err = tx.Delete(&model.User{}, in.UserId).Error
 	if err != nil {
 		log.Error(err.Error())

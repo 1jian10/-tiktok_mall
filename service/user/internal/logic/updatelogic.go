@@ -27,6 +27,7 @@ func NewUpdateLogic(ctx context.Context, svcCtx *svc.ServiceContext) *UpdateLogi
 func (l *UpdateLogic) Update(in *user.UpdateReq) (*user.UpdateResp, error) {
 	db := l.svcCtx.DB
 	log := l.svcCtx.Log
+
 	res := db.Model(&model.User{}).Where("id = ?", in.UserId).Update("password", in.Password)
 	if res.Error != nil {
 		log.Error(res.Error.Error())
