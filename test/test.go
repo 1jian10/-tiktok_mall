@@ -19,14 +19,14 @@ func main() {
 			UserId:    2,
 		}
 	}
-	for i := 0; i < 128; i++ {
+	for i := 0; i < 16; i++ {
 		go run(i)
 	}
 	time.Sleep(time.Second * 60)
 
 	sum1 := 0
 	sum2 := 0
-	for i := 0; i < 128; i++ {
+	for i := 0; i < 16; i++ {
 		sum1 += errNums[i]
 		sum2 += requestNums[i]
 	}

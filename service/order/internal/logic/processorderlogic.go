@@ -91,7 +91,7 @@ func (l *ProcessOrderLogic) ProcessOrder(in *order.ProcessOrderReq) (*order.Proc
 		cost += p.Price * float32(val.Quantity)
 	}
 	o.Cost = cost
-	err := tx.Save(&o).Error
+	err := tx.Create(&o).Error
 	if err != nil {
 		tx.Rollback()
 		if !IsSync {

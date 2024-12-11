@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 	"mall/model"
 	"mall/service/order/internal/svc"
 	"mall/service/order/proto/order"
@@ -82,13 +83,21 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 			return nil, errors.New("stock not enough")
 		}
 	}
-
-	o := model.Order{UserID: uint(in.UserId)}
-	if err := db.Create(&o).Error; err != nil {
-		log.Error("place create order:" + err.Error())
+	id, err := rdb.Incr(context.Background(), "orderid").Result()
+	if err != nil {
 		rollback(key, decr, rdb)
+		log.Error("incr order id:" + err.Error())
 		return nil, err
 	}
+	o := model.Order{
+		Model:  gorm.Model{ID: uint(id)},
+		UserID: uint(in.UserId),
+	}
+	//if err := db.Create(&o).Error; err != nil {
+	//	log.Error("place create order:" + err.Error())
+	//	rollback(key, decr, rdb)
+	//	return nil, err
+	//}
 	return &order.PlaceOrderResp{OrderId: uint32(o.ID)}, nil
 }
 
