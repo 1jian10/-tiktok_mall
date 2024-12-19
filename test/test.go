@@ -11,22 +11,24 @@ import (
 	"time"
 )
 
+var t = time.Second * 60
+
 func main() {
 	for i := 0; i < 500; i++ {
 		req[i] = order.PlaceOrderReq{
-			ProductId: []uint32{rand.Uint32()%80 + 31},
+			ProductId: []uint32{rand.Uint32()%200 + 200},
 			Quantity:  []int32{5},
 			UserId:    2,
 		}
 	}
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 64; i++ {
 		go run(i)
 	}
-	time.Sleep(time.Second * 60)
+	time.Sleep(t)
 
 	sum1 := 0
 	sum2 := 0
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 64; i++ {
 		sum1 += errNums[i]
 		sum2 += requestNums[i]
 	}
@@ -49,7 +51,7 @@ func run(i int) {
 	OrderClient := order.NewOrderServiceClient(OrderConn.Conn())
 	client := OrderClient
 	fmt.Println("routine:", i, " start")
-	t := time.Now().Add(time.Second * 60).Unix()
+	t := time.Now().Add(t).Unix()
 	ctx := context.Background()
 
 	for time.Now().Unix() < t {

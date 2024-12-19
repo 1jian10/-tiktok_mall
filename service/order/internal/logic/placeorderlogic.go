@@ -42,47 +42,50 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 
 	for i, pid := range in.ProductId {
 		id := strconv.Itoa(int(pid))
-		//此处存在并发问题，可能查到之后，数据立马过期
+		//这里即使获取数据后立马过期也没关系
 		_, err := rdb.Get(context.Background(), "product:stock:"+id).Result()
 		if errors.Is(err, redis.Nil) {
 			//防止缓存击穿，同一时间只有一个协程能去获取stock
-			//在非单机情况下，需要加分布式锁，此处省略
 			_, err, _ := group.Do("product:stock:"+id, func() (interface{}, error) {
 				product := model.Product{}
-				//防止重复获取数据，覆盖正常的stock
-				err = db.Select("Stock").Take(&product, pid).Error
-				if err == nil {
-					err = rdb.Get(context.Background(), "product:stock:"+id).Err()
-					if errors.Is(err, redis.Nil) {
-						err = nil
-						rdb.Set(context.Background(), "product:stock:"+id, product.Stock, util.RandTime())
-					}
-				}
-				return nil, err
-			})
 
+				err = db.Select("Stock").Take(&product, pid).Error
+				if err != nil {
+					return false, err
+				}
+				//lua脚本保证原子性
+				ok, err := util.SetKey(rdb, "product:stock:"+id, product.Stock, util.RandTime())
+				if err != nil {
+					log.Error("set product stock:" + err.Error())
+				}
+				return ok, err
+			})
 			if err != nil {
-				log.Error("take product id:" + id + ":" + err.Error())
-				log.Error("rollback")
 				rollback(key, decr, rdb)
 				return nil, err
 			}
+
 		} else if err != nil {
 			log.Error("get stock from redis:" + err.Error())
 			rollback(key, decr, rdb)
 			return nil, err
 		}
-		//此操作为原子操作，无需加锁，只需要判断返回值是否小于0
-		res, err := rdb.DecrBy(context.Background(), "product:stock:"+id, int64(in.Quantity[i])).Result()
-		rdb.Expire(context.Background(), "product:stock:"+id, util.RandTime())
-		key = append(key, "product:stock:"+id)
-		decr = append(decr, uint(in.Quantity[i]))
-		if res < 0 {
+
+		ok, err := util.DecrBy(rdb, "product:stock:"+id, int64(in.Quantity[i]), util.RandTime())
+		if err != nil {
+			rollback(key, decr, rdb)
+			log.Error("decr product stock:" + err.Error())
+			return nil, err
+		} else if !ok {
 			rollback(key, decr, rdb)
 			log.Info("stock not enough...rollback")
 			return nil, errors.New("stock not enough")
 		}
+
+		key = append(key, "product:stock:"+id)
+		decr = append(decr, uint(in.Quantity[i]))
 	}
+	//生成唯一订单id，避免数据库操作，可以显著提升系统qps
 	id, err := rdb.Incr(context.Background(), "orderid").Result()
 	if err != nil {
 		rollback(key, decr, rdb)
@@ -104,6 +107,7 @@ func (l *PlaceOrderLogic) PlaceOrder(in *order.PlaceOrderReq) (*order.PlaceOrder
 // 回滚函数，在库存不足或者订单创建失败时调用，将预减的库存加回去
 func rollback(key []string, stock []uint, rdb *redis.Client) {
 	for i := range key {
+		//这里无需判断key是否存在，是因为我们在减库存时重置了其过期时间
 		rdb.IncrBy(context.Background(), key[i], int64(stock[i]))
 	}
 }
